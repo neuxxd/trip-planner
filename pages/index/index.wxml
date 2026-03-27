@@ -1,0 +1,44 @@
+<view class="container">
+  <!-- 顶部搜索栏 -->
+  <view class="search-bar">
+    <input class="search-input" placeholder="搜索目的地、景点..." bindinput="onSearchInput" value="{{searchKey}}" />
+    <view class="search-btn" bindtap="onSearch">搜索</view>
+  </view>
+
+  <!-- 主标题 -->
+  <view class="hero-section">
+    <text class="hero-title">探索你的下一次旅行</text>
+    <text class="hero-subtitle">发现精彩目的地，规划完美行程</text>
+  </view>
+
+  <!-- 快速开始按钮 -->
+  <view class="quick-start-section">
+    <button class="quick-start-btn" bindtap="onQuickStart">快速开始</button>
+  </view>
+
+  <!-- 最近行程 -->
+  <view class="recent-trips-section">
+    <view class="section-header">
+      <text class="section-title">最近行程</text>
+      <text class="section-more" bindtap="onViewAllTrips">查看全部 ></text>
+    </view>
+    
+    <view class="trips-list">
+      <block wx:if="{{recentTrips.length > 0}}">
+        <view class="trip-item" wx:for="{{recentTrips}}" wx:key="id" bindtap="onTripClick" data-id="{{item.id}}">
+          <image class="trip-cover" src="{{item.cover}}" mode="aspectFill" />
+          <view class="trip-info">
+            <text class="trip-name">{{item.name}}</text>
+            <text class="trip-date">{{item.date}}</text>
+          </view>
+        </view>
+      </block>
+      <block wx:else>
+        <view class="empty-trips">
+          <text class="empty-text">暂无最近行程</text>
+          <text class="empty-hint">点击上方"快速开始"创建你的第一个行程</text>
+        </view>
+      </block>
+    </view>
+  </view>
+</view>
