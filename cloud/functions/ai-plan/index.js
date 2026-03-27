@@ -5,18 +5,47 @@ cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 });
 
-// 模拟AI规划逻辑
-function generatePlan(tripData, spots) {
+// 调用外部AI API
+async function callAIAPI(tripData, spots) {
   const { destination, startDate, endDate, travelers, budget, preferences } = tripData;
+  const days = calculateDays(startDate, endDate);
+  const budgetText = { low: '经济型', medium: '舒适型', high: '豪华型' }[budget];
   
-  // 计算天数
+  const prompt = `请为${destination}制定${days}天旅行行程。
+出行信息：${travelers}人，${budgetText}预算，偏好：${preferences.join(',') || '无'}。
+可选景点：${spots.map(s => s.name).join('、')}。
+请返回JSON格式的行程规划，包含dailyPlan和estimatedCost。`;
+
+  try {
+    // 这里可以接入真实的AI API
+    // 示例：Kimi、OpenAI、文心一言等
+    const response = await cloud.callFunction({
+      name: 'ai-service',
+      data: { prompt }
+    });
+    
+    return response.result;
+  } catch (error) {
+    console.error('AI API调用失败:', error);
+    return null;
+  }
+}
+
+// 计算天数
+function calculateDays(startDate, endDate) {
   const start = new Date(startDate);
   const end = new Date(endDate);
-  const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-  
-  // 按天数分配景点
-  const dailyPlan = [];
+  return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+}
+
+// 本地规划算法（降级方案）
+function generatePlan(tripData, spots) {
+  const { destination, startDate, endDate, travelers, budget, preferences } = tripData;
+  const days = calculateDays(startDate, endDate);
   const spotsPerDay = Math.min(3, Math.ceil(spots.length / days));
+  
+  const dailyPlan = [];
+  const start = new Date(startDate);
   
   for (let i = 0; i < days; i++) {
     const daySpots = spots.slice(i * spotsPerDay, (i + 1) * spotsPerDay);
@@ -24,14 +53,15 @@ function generatePlan(tripData, spots) {
     dailyPlan.push({
       day: i + 1,
       date: new Date(start.getTime() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      spots: daySpots.map(spot => ({
+      theme: `第${i + 1}天行程`,
+      spots: daySpots.map((spot, idx) => ({
         id: spot.id,
         name: spot.name,
         image: spot.image,
-        startTime: '09:00',
-        endTime: '12:00',
+        startTime: `${9 + idx * 4}:00`,
+        endTime: `${12 + idx * 4}:00`,
         duration: '3小时',
-        tips: '建议早上去，避开人流高峰'
+        tips: '建议提前预订门票'
       })),
       meals: {
         breakfast: '酒店早餐',
@@ -58,7 +88,7 @@ function generatePlan(tripData, spots) {
 
 // 计算预估费用
 function calculateCost(spots, days, travelers, budget) {
-  const ticketCost = spots.reduce((sum, s) => sum + s.price, 0) * travelers;
+  const ticketCost = spots.reduce((sum, s) => sum + (s.price || 0), 0) * travelers;
   const dailyCost = { low: 300, medium: 600, high: 1200 }[budget] || 600;
   const totalCost = ticketCost + dailyCost * days * travelers;
   
