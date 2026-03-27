@@ -1,5 +1,8 @@
 {
   "name": "spot-search",
   "version": "1.0.0",
-  "description": "景点搜索云函数"
+  "description": "景点搜索云函数 - 支持云数据库和高德API",
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
 }

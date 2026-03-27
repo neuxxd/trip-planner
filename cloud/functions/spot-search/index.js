@@ -1,121 +1,87 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk');
 
-cloud.init({
-  env: cloud.DYNAMIC_CURRENT_ENV
-});
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
-// 模拟景点数据库
-const mockSpotsDB = [
-  {
-    id: 1,
-    name: '故宫博物院',
-    image: '/images/spot1.jpg',
-    tags: ['历史', '文化', '世界遗产'],
-    rating: 4.9,
-    price: 60,
-    location: { lat: 39.9163, lng: 116.3972 },
-    city: '北京'
-  },
-  {
-    id: 2,
-    name: '八达岭长城',
-    image: '/images/spot2.jpg',
-    tags: ['历史', '户外', '世界遗产'],
-    rating: 4.8,
-    price: 40,
-    location: { lat: 40.3599, lng: 116.0200 },
-    city: '北京'
-  },
-  {
-    id: 3,
-    name: '颐和园',
-    image: '/images/spot3.jpg',
-    tags: ['园林', '文化', '休闲'],
-    rating: 4.7,
-    price: 30,
-    location: { lat: 39.9999, lng: 116.2755 },
-    city: '北京'
-  },
-  {
-    id: 4,
-    name: '天坛公园',
-    image: '/images/spot4.jpg',
-    tags: ['历史', '文化', '世界遗产'],
-    rating: 4.6,
-    price: 15,
-    location: { lat: 39.8822, lng: 116.4066 },
-    city: '北京'
-  },
-  {
-    id: 5,
-    name: '圆明园',
-    image: '/images/spot5.jpg',
-    tags: ['历史', '园林', '遗址'],
-    rating: 4.5,
-    price: 10,
-    location: { lat: 40.0080, lng: 116.2980 },
-    city: '北京'
-  },
-  {
-    id: 6,
-    name: '鸟巢',
-    image: '/images/spot6.jpg',
-    tags: ['建筑', '体育', '地标'],
-    rating: 4.4,
-    price: 50,
-    location: { lat: 39.9929, lng: 116.3965 },
-    city: '北京'
-  },
-  {
-    id: 7,
-    name: '水立方',
-    image: '/images/spot7.jpg',
-    tags: ['建筑', '体育', '地标'],
-    rating: 4.3,
-    price: 30,
-    location: { lat: 39.9900, lng: 116.3840 },
-    city: '北京'
-  },
-  {
-    id: 8,
-    name: '798艺术区',
-    image: '/images/spot8.jpg',
-    tags: ['艺术', '文化', '创意'],
-    rating: 4.5,
-    price: 0,
-    location: { lat: 39.9850, lng: 116.4960 },
-    city: '北京'
-  }
-];
+const db = cloud.database();
+const _ = db.command;
 
 // 搜索景点
-function searchSpots(keyword, city, page, pageSize) {
-  let results = [...mockSpotsDB];
+async function searchFromDB(keyword, city, page, pageSize) {
+  let query = db.collection('spots');
   
-  // 按城市筛选
+  // 城市筛选
   if (city) {
-    results = results.filter(s => s.city.includes(city));
+    query = query.where({ city: city });
   }
   
-  // 按关键词搜索
+  // 关键词搜索（名称或标签）
   if (keyword) {
-    const lowerKeyword = keyword.toLowerCase();
-    results = results.filter(s => 
-      s.name.toLowerCase().includes(lowerKeyword) ||
-      s.tags.some(t => t.toLowerCase().includes(lowerKeyword))
-    );
+    query = query.where(_.or([
+      { name: db.RegExp({ regexp: keyword, options: 'i' }) },
+      { tags: db.RegExp({ regexp: keyword, options: 'i' }) }
+    ]));
   }
   
-  // 分页
-  const start = (page - 1) * pageSize;
-  const end = start + pageSize;
+  // 分页查询
+  const total = await query.count();
+  
+  const list = await query
+    .skip((page - 1) * pageSize)
+    .limit(pageSize)
+    .orderBy('rating', 'desc')
+    .get();
   
   return {
-    list: results.slice(start, end),
-    total: results.length,
-    hasMore: end < results.length
+    list: list.data,
+    total: total.total,
+    hasMore: (page * pageSize) < total.total
   };
+}
+
+// 从高德 API 搜索（备用）
+async function searchFromAMap(keyword, city, page, pageSize, amapKey) {
+  const axios = require('axios');
+  
+  try {
+    const response = await axios.get('https://restapi.amap.com/v3/place/text', {
+      params: {
+        key: amapKey,
+        keywords: keyword,
+        city: city || '北京',
+        offset: pageSize,
+        page: page,
+        extensions: 'all'
+      },
+      timeout: 5000
+    });
+    
+    if (response.data.status === '1') {
+      const pois = response.data.pois || [];
+      return {
+        list: pois.map(poi => ({
+          id: poi.id,
+          name: poi.name,
+          city: poi.cityname || city || '北京',
+          address: poi.address,
+          tags: poi.type.split(';').slice(0, 3),
+          price: 0, // 高德API不返回价格
+          rating: parseFloat(poi.biz_ext?.rating) || 4.0,
+          location: {
+            type: 'Point',
+            coordinates: poi.location.split(',').map(Number).reverse() // [lng, lat]
+          },
+          images: poi.photos ? poi.photos.map(p => p.url) : []
+        })),
+        total: parseInt(response.data.count) || pois.length,
+        hasMore: pois.length === pageSize
+      };
+    }
+    throw new Error('高德API返回错误');
+  } catch (error) {
+    console.error('高德搜索失败:', error.message);
+    throw error;
+  }
 }
 
 // 主函数
@@ -125,17 +91,25 @@ exports.main = async (event, context) => {
     city = '', 
     page = 1, 
     pageSize = 10,
-    sortBy = 'rating' // rating, price, distance
+    sortBy = 'rating', // rating, price, distance
+    useAMap = false, // 是否使用高德API
+    amapKey = '' // 高德Key（如果使用高德API）
   } = event;
   
   try {
-    const result = searchSpots(keyword, city, page, pageSize);
+    let result;
+    
+    if (useAMap && amapKey) {
+      // 使用高德API
+      result = await searchFromAMap(keyword, city, page, pageSize, amapKey);
+    } else {
+      // 使用云数据库
+      result = await searchFromDB(keyword, city, page, pageSize);
+    }
     
     // 排序
-    if (sortBy === 'rating') {
-      result.list.sort((a, b) => b.rating - a.rating);
-    } else if (sortBy === 'price') {
-      result.list.sort((a, b) => a.price - b.price);
+    if (sortBy === 'price') {
+      result.list.sort((a, b) => (a.price || 0) - (b.price || 0));
     }
     
     return {
