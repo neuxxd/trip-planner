@@ -1,0 +1,50 @@
+{
+  "description": "TripPlanner - 智能旅行规划小程序",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "setting": {
+    "bundle": false,
+    "userConfirmedBundleSwitch": false,
+    "urlCheck": true,
+    "scopeDataCheck": false,
+    "coverView": true,
+    "es6": true,
+    "postcss": true,
+    "compileHotReLoad": true,
+    "minified": true,
+    "autoAudits": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "condition": false,
+    "uglify": true,
+    "lazyloadPlaceholderEnabled": true,
+    "useMultiFrameRuntime": true,
+    "useApiHook": true,
+    "useApiHostProcess": true,
+    "showShadowRootInWxmlPanel": true,
+    "nodeModules": false,
+    "enhance": true,
+    "useCompilerPlugins": false,
+    "verifyFilePath": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "2.25.0",
+  "appid": "wxxxxxxxxxxx",
+  "projectname": "trip-planner",
+  "condition": {},
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  },
+  "cloudfunctionTemplateRoot": "cloudfunctionTemplate",
+  "srcMiniprogramRoot": "miniprogram/",
+  "cloudbaseRoot": "cloudbase/",
+  "miniprogramRoot": "miniprogram/"
+}
