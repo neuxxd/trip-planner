@@ -1,5 +1,12 @@
 <!--pages/map/map.wxml-->
 <view class="container">
+  <!-- 加载状态 -->
+  <view class="loading-mask" wx:if="{{loading}}">
+    <view class="loading-content">
+      <text class="loading-text">正在规划路线...</text>
+    </view>
+  </view>
+
   <!-- 地图区域 -->
   <map 
     class="map" 
@@ -13,6 +20,52 @@
     bindmarkertap="onMarkerTap"
   ></map>
 
+  <!-- 交通方式切换 -->
+  <view class="transport-bar">
+    <view 
+      class="transport-item {{transportMode === 'driving' ? 'active' : ''}}"
+      data-mode="driving"
+      bindtap="onChangeTransportMode"
+    >
+      <text class="transport-icon">🚗</text>
+      <text class="transport-text">驾车</text>
+    </view>
+    <view 
+      class="transport-item {{transportMode === 'transit' ? 'active' : ''}}"
+      data-mode="transit"
+      bindtap="onChangeTransportMode"
+    >
+      <text class="transport-icon">🚌</text>
+      <text class="transport-text">公交</text>
+    </view>
+    <view 
+      class="transport-item {{transportMode === 'walking' ? 'active' : ''}}"
+      data-mode="walking"
+      bindtap="onChangeTransportMode"
+    >
+      <text class="transport-icon">🚶</text>
+      <text class="transport-text">步行</text>
+    </view>
+  </view>
+
+  <!-- 路线总览卡片 -->
+  <view class="route-summary" wx:if="{{totalDistance > 0}}">
+    <view class="summary-item">
+      <text class="summary-value">{{spots.length}}</text>
+      <text class="summary-label">景点</text>
+    </view>
+    <view class="summary-divider"></view>
+    <view class="summary-item">
+      <text class="summary-value">{{totalDistance > 1000 ? (totalDistance/1000).toFixed(1) + 'km' : totalDistance + 'm'}}</text>
+      <text class="summary-label">总距离</text>
+    </view>
+    <view class="summary-divider"></view>
+    <view class="summary-item">
+      <text class="summary-value">{{totalDuration > 3600 ? Math.floor(totalDuration/3600) + 'h' : Math.floor(totalDuration/60) + 'min'}}</text>
+      <text class="summary-label">总时长</text>
+    </view>
+  </view>
+
   <!-- 景点列表浮层 -->
   <view class="spots-panel {{panelExpanded ? 'expanded' : ''}}">
     <!-- 拖动条 -->
@@ -24,7 +77,7 @@
     <scroll-view class="spots-scroll" scroll-y="true">
       <view class="panel-header">
         <text class="panel-title">行程路线</text>
-        <text class="panel-subtitle">共 {{spots.length}} 个景点</text>
+        <text class="panel-subtitle">共 {{spots.length}} 个景点 · AI智能优化</text>
       </view>
       
       <view class="route-list">
@@ -35,16 +88,17 @@
           
           <view class="route-line" wx:if="{{index < spots.length - 1}}"></view>
           
+          <!-- 路段信息 -->
+          <view class="route-segment" wx:if="{{item.routeFromPrev}}">
+            <text class="segment-info">{{item.routeFromPrev.formattedDistance}} · {{item.routeFromPrev.formattedDuration}}</text>
+          </view>
+          
           <view class="route-content" bindtap="onSpotTap" data-index="{{index}}">
             <image class="route-image" src="{{item.image}}" mode="aspectFill"/>
             
             <view class="route-info">
               <text class="route-name">{{item.name}}</text>
               <text class="route-address">{{item.address || '北京市'}}</text>
-              <view class="route-meta">
-                <text class="route-time" wx:if="{{item.time}}">{{item.time}}</text>
-                <text class="route-distance" wx:if="{{item.distance}}">距上一点 {{item.distance}}km</text>
-              </view>
             </view>
             
             <view class="route-nav" catchtap="onNavigate" data-index="{{index}}">
@@ -66,6 +120,11 @@
     <view class="action-item" bindtap="onShowRoute">
       <text class="action-icon">🗺</text>
       <text class="action-text">路线</text>
+    </view>
+    
+    <view class="action-item" bindtap="onSearchNearby">
+      <text class="action-icon">🔍</text>
+      <text class="action-text">周边</text>
     </view>
     
     <view class="action-item" bindtap="onBackToPlan">

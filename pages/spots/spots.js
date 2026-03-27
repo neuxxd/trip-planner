@@ -1,19 +1,28 @@
 // pages/spots/spots.js
+const amap = require('../../utils/amap.js');
+
 Page({
   data: {
     keyword: '',
+    city: '北京',
     spots: [],
     loading: false,
     noMore: false,
     page: 1,
     pageSize: 10,
-    selectedCount: 0
+    selectedCount: 0,
+    useAMap: true // 是否使用高德搜索
   },
 
   onLoad: function(options) {
     // 如果有搜索关键词
     if (options.keyword) {
       this.setData({ keyword: options.keyword });
+    }
+    // 获取当前行程的目的地
+    const currentTrip = wx.getStorageSync('currentTrip');
+    if (currentTrip && currentTrip.destination) {
+      this.setData({ city: currentTrip.destination });
     }
     this.loadSpots();
   },
@@ -36,119 +45,160 @@ Page({
   },
 
   // 加载景点列表
-  loadSpots: function() {
+  loadSpots: async function() {
     if (this.data.loading || this.data.noMore) return;
 
     this.setData({ loading: true });
 
-    // 模拟数据（实际应该调用 API）
-    const mockSpots = this.getMockSpots();
-    
-    setTimeout(() => {
-      const spots = this.data.page === 1 ? mockSpots : [...this.data.spots, ...mockSpots];
+    try {
+      let spots;
+      
+      if (this.data.useAMap) {
+        // 使用高德 POI 搜索
+        spots = await this.searchFromAMap();
+      } else {
+        // 使用云数据库
+        spots = await this.searchFromCloud();
+      }
+
+      const newSpots = this.data.page === 1 ? spots : [...this.data.spots, ...spots];
       
       this.setData({
-        spots: spots,
+        spots: newSpots,
         loading: false,
-        noMore: this.data.page >= 3 // 模拟只有3页数据
+        noMore: spots.length < this.data.pageSize
       });
-      
-      this.updateSelectedCount();
-    }, 500);
+
+      // 恢复选中状态
+      this.restoreSelection();
+    } catch (error) {
+      console.error('加载景点失败:', error);
+      this.setData({ loading: false });
+      wx.showToast({ title: '加载失败', icon: 'none' });
+    }
   },
 
-  // 模拟景点数据
-  getMockSpots: function() {
-    const baseSpots = [
-      {
-        id: 1,
-        name: '故宫博物院',
-        image: '/images/spot1.jpg',
-        tags: ['历史', '文化', '世界遗产'],
-        rating: 4.9,
-        price: 60
-      },
-      {
-        id: 2,
-        name: '八达岭长城',
-        image: '/images/spot2.jpg',
-        tags: ['历史', '户外', '世界遗产'],
-        rating: 4.8,
-        price: 40
-      },
-      {
-        id: 3,
-        name: '颐和园',
-        image: '/images/spot3.jpg',
-        tags: ['园林', '文化', '休闲'],
-        rating: 4.7,
-        price: 30
-      },
-      {
-        id: 4,
-        name: '天坛公园',
-        image: '/images/spot4.jpg',
-        tags: ['历史', '文化', '世界遗产'],
-        rating: 4.6,
-        price: 15
-      },
-      {
-        id: 5,
-        name: '圆明园',
-        image: '/images/spot5.jpg',
-        tags: ['历史', '园林', '遗址'],
-        rating: 4.5,
-        price: 10
-      }
-    ];
+  // 从高德搜索
+  searchFromAMap: async function() {
+    const { keyword, city, page, pageSize } = this.data;
+    
+    try {
+      const pois = await amap.searchPOI(keyword || '景点', city, {
+        page: page,
+        offset: pageSize
+      });
+      
+      return pois.map(poi => ({
+        id: poi.id,
+        name: poi.name,
+        image: poi.photos && poi.photos.length > 0 ? poi.photos[0] : '/images/spot1.jpg',
+        tags: poi.type ? poi.type.split(';').slice(0, 2) : ['景点'],
+        price: poi.price || 0,
+        rating: poi.rating || 4.5,
+        address: poi.address,
+        longitude: poi.location.longitude,
+        latitude: poi.location.latitude,
+        distance: poi.distance,
+        selected: false
+      }));
+    } catch (error) {
+      console.error('高德搜索失败:', error);
+      // 降级到模拟数据
+      return this.getMockSpots();
+    }
+  },
 
-    // 根据页码生成不同数据
-    return baseSpots.map((spot, index) => ({
+  // 从云数据库搜索
+  searchFromCloud: async function() {
+    const { keyword, page, pageSize } = this.data;
+    
+    return new Promise((resolve, reject) => {
+      wx.cloud.callFunction({
+        name: 'spot-search',
+        data: {
+          keyword: keyword,
+          city: this.data.city,
+          page: page,
+          pageSize: pageSize,
+          useAMap: false
+        },
+        success: (res) => {
+          if (res.result.code === 0) {
+            resolve(res.result.data.list.map(spot => ({
+              ...spot,
+              selected: false
+            })));
+          } else {
+            reject(new Error(res.result.message));
+          }
+        },
+        fail: reject
+      });
+    });
+  },
+
+  // 恢复选中状态
+  restoreSelection: function() {
+    const selectedSpots = wx.getStorageSync('selectedSpots') || [];
+    const selectedIds = selectedSpots.map(s => s.id);
+    
+    const spots = this.data.spots.map(spot => ({
       ...spot,
-      id: spot.id + (this.data.page - 1) * 5,
-      selected: false
+      selected: selectedIds.includes(spot.id)
     }));
+    
+    this.setData({
+      spots: spots,
+      selectedCount: selectedIds.length
+    });
+  },
+
+  // 模拟数据（降级方案）
+  getMockSpots: function() {
+    const allSpots = [
+      { id: 1, name: '故宫博物院', image: '/images/spot1.jpg', tags: ['历史', '文化'], price: 60, rating: 4.9, address: '北京市东城区景山前街4号' },
+      { id: 2, name: '八达岭长城', image: '/images/spot2.jpg', tags: ['历史', '户外'], price: 40, rating: 4.8, address: '北京市延庆区G6京藏高速58号出口' },
+      { id: 3, name: '颐和园', image: '/images/spot3.jpg', tags: ['园林', '文化'], price: 30, rating: 4.7, address: '北京市海淀区新建宫门路19号' },
+      { id: 4, name: '天坛公园', image: '/images/spot4.jpg', tags: ['历史', '文化'], price: 15, rating: 4.6, address: '北京市东城区天坛东里甲1号' },
+      { id: 5, name: '圆明园', image: '/images/spot5.jpg', tags: ['历史', '园林'], price: 10, rating: 4.5, address: '北京市海淀区清华西路28号' },
+      { id: 6, name: '鸟巢', image: '/images/spot6.jpg', tags: ['建筑', '体育'], price: 50, rating: 4.4, address: '北京市朝阳区国家体育场南路1号' },
+      { id: 7, name: '水立方', image: '/images/spot7.jpg', tags: ['建筑', '体育'], price: 30, rating: 4.3, address: '北京市朝阳区天辰东路11号' },
+      { id: 8, name: '798艺术区', image: '/images/spot8.jpg', tags: ['艺术', '文化'], price: 0, rating: 4.5, address: '北京市朝阳区酒仙桥路4号' }
+    ];
+    
+    const start = (this.data.page - 1) * this.data.pageSize;
+    return allSpots.slice(start, start + this.data.pageSize);
+  },
+
+  // 选择/取消选择景点
+  onSelectSpot: function(e) {
+    const index = e.currentTarget.dataset.index;
+    const spot = this.data.spots[index];
+    
+    const spots = this.data.spots;
+    spots[index].selected = !spots[index].selected;
+    
+    const selectedCount = spots.filter(s => s.selected).length;
+    
+    this.setData({
+      spots: spots,
+      selectedCount: selectedCount
+    });
   },
 
   // 加载更多
   onLoadMore: function() {
-    if (!this.data.noMore && !this.data.loading) {
-      this.setData({
-        page: this.data.page + 1
-      });
-      this.loadSpots();
-    }
-  },
-
-  // 选择/取消景点
-  onSpotToggle: function(e) {
-    const index = e.currentTarget.dataset.index;
-    const spots = this.data.spots;
-    spots[index].selected = !spots[index].selected;
+    if (this.data.loading || this.data.noMore) return;
     
-    this.setData({ spots });
-    this.updateSelectedCount();
-  },
-
-  // 更新已选数量
-  updateSelectedCount: function() {
-    const count = this.data.spots.filter(s => s.selected).length;
-    this.setData({ selectedCount: count });
-  },
-
-  // 清空选择
-  onClearSelected: function() {
-    const spots = this.data.spots.map(s => ({
-      ...s,
-      selected: false
-    }));
+    this.setData({
+      page: this.data.page + 1
+    });
     
-    this.setData({ spots });
-    this.updateSelectedCount();
+    this.loadSpots();
   },
 
-  // 下一步
-  onNext: function() {
+  // 完成选择
+  onComplete: function() {
     const selectedSpots = this.data.spots.filter(s => s.selected);
     
     if (selectedSpots.length === 0) {
@@ -158,13 +208,16 @@ Page({
       });
       return;
     }
-
-    // 保存选择的景点
+    
+    // 保存到本地存储
     wx.setStorageSync('selectedSpots', selectedSpots);
+    
+    // 返回上一页
+    wx.navigateBack();
+  },
 
-    // 跳转到规划页
-    wx.navigateTo({
-      url: '/pages/plan/plan'
-    });
+  // 返回
+  onBack: function() {
+    wx.navigateBack();
   }
 });

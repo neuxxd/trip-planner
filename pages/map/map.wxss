@@ -6,10 +6,116 @@
   width: 100vw;
 }
 
+/* 加载状态 */
+.loading-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-content {
+  background-color: #fff;
+  padding: 40rpx 60rpx;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #666;
+}
+
 /* 地图 */
 .map {
   width: 100%;
   height: 100%;
+}
+
+/* 交通方式切换栏 */
+.transport-bar {
+  position: absolute;
+  top: 40rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  background-color: #fff;
+  border-radius: 40rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  padding: 8rpx;
+  z-index: 100;
+}
+
+.transport-item {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 32rpx;
+  border-radius: 32rpx;
+  transition: all 0.3s;
+}
+
+.transport-item.active {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+}
+
+.transport-icon {
+  font-size: 32rpx;
+  margin-right: 8rpx;
+}
+
+.transport-text {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.transport-item.active .transport-text {
+  color: #fff;
+}
+
+/* 路线总览卡片 */
+.route-summary {
+  position: absolute;
+  top: 140rpx;
+  left: 30rpx;
+  right: 30rpx;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.summary-value {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1890ff;
+  margin-bottom: 8rpx;
+}
+
+.summary-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.summary-divider {
+  width: 2rpx;
+  height: 60rpx;
+  background-color: #f0f0f0;
 }
 
 /* 景点面板 */
@@ -102,6 +208,23 @@
   background-color: #e8e8e8;
 }
 
+/* 路段信息 */
+.route-segment {
+  position: absolute;
+  left: 60rpx;
+  top: -10rpx;
+  background-color: #f6ffed;
+  border: 1rpx solid #b7eb8f;
+  border-radius: 8rpx;
+  padding: 4rpx 12rpx;
+  z-index: 10;
+}
+
+.segment-info {
+  font-size: 20rpx;
+  color: #52c41a;
+}
+
 .route-content {
   flex: 1;
   display: flex;
@@ -136,25 +259,6 @@
 .route-address {
   font-size: 24rpx;
   color: #999;
-  margin-bottom: 8rpx;
-}
-
-.route-meta {
-  display: flex;
-  gap: 20rpx;
-}
-
-.route-time {
-  font-size: 22rpx;
-  color: #1890ff;
-  background-color: #e6f7ff;
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-}
-
-.route-distance {
-  font-size: 22rpx;
-  color: #666;
 }
 
 .route-nav {
@@ -189,7 +293,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10rpx 40rpx;
+  padding: 10rpx 30rpx;
 }
 
 .action-icon {

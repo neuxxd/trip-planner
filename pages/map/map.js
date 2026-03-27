@@ -1,4 +1,6 @@
 // pages/map/map.js
+const amap = require('../../utils/amap.js');
+
 Page({
   data: {
     // 地图中心位置（北京）
@@ -11,8 +13,17 @@ Page({
     polyline: [],
     // 景点列表
     spots: [],
+    // 优化后的路线
+    optimizedRoute: [],
     // 面板展开状态
-    panelExpanded: false
+    panelExpanded: false,
+    // 加载状态
+    loading: false,
+    // 当前交通方式
+    transportMode: 'driving', // driving, walking, transit
+    // 总距离和时长
+    totalDistance: 0,
+    totalDuration: 0
   },
 
   onLoad: function() {
@@ -24,86 +35,157 @@ Page({
   },
 
   // 加载景点数据
-  loadSpots: function() {
-    // 从本地存储获取选择的景点
+  loadSpots: async function() {
     const selectedSpots = wx.getStorageSync('selectedSpots');
     
     if (selectedSpots && selectedSpots.length > 0) {
-      // 添加坐标信息（实际应该从后端获取）
-      const spotsWithLocation = selectedSpots.map((spot, index) => ({
-        ...spot,
-        latitude: this.getSpotLatitude(spot.id),
-        longitude: this.getSpotLongitude(spot.id),
-        address: this.getSpotAddress(spot.id),
-        time: `Day ${Math.floor(index / 2) + 1}`,
-        distance: index > 0 ? (Math.random() * 5 + 1).toFixed(1) : null
-      }));
+      this.setData({ loading: true });
+      
+      try {
+        // 获取景点坐标（使用真实坐标或地理编码）
+        const spotsWithLocation = await this.enrichSpotsWithLocation(selectedSpots);
+        
+        this.setData({
+          spots: spotsWithLocation,
+          loading: false
+        });
 
-      this.setData({
-        spots: spotsWithLocation
-      });
-
-      this.updateMapMarkers(spotsWithLocation);
-      this.updatePolyline(spotsWithLocation);
-      this.fitMapBounds(spotsWithLocation);
+        // 更新地图
+        this.updateMapMarkers(spotsWithLocation);
+        this.fitMapBounds(spotsWithLocation);
+        
+        // 优化路线
+        await this.optimizeRoute(spotsWithLocation);
+      } catch (error) {
+        console.error('加载景点失败:', error);
+        this.setData({ loading: false });
+        wx.showToast({ title: '加载失败', icon: 'none' });
+      }
     } else {
-      // 使用默认数据
       this.setDefaultSpots();
     }
   },
 
-  // 获取景点纬度（模拟数据）
-  getSpotLatitude: function(id) {
-    const latMap = {
-      1: 39.9163,  // 故宫
-      2: 40.3599,  // 长城
-      3: 39.9999,  // 颐和园
-      4: 39.8822,  // 天坛
-      5: 40.0080,  // 圆明园
-      6: 39.9929,  // 鸟巢
-      7: 39.9900,  // 水立方
-      8: 39.9850   // 798
-    };
-    return latMap[id] || 39.9 + Math.random() * 0.1;
+  // 为景点添加坐标信息
+  enrichSpotsWithLocation: async function(spots) {
+    const enrichedSpots = [];
+    
+    for (let i = 0; i < spots.length; i++) {
+      const spot = spots[i];
+      
+      // 如果已有坐标，直接使用
+      if (spot.longitude && spot.latitude) {
+        enrichedSpots.push({
+          ...spot,
+          order: i + 1
+        });
+      } else {
+        // 使用地理编码获取坐标
+        try {
+          const location = await amap.geocode(spot.name, spot.city || '北京');
+          enrichedSpots.push({
+            ...spot,
+            longitude: location.longitude,
+            latitude: location.latitude,
+            address: location.formattedAddress || spot.address,
+            order: i + 1
+          });
+        } catch (error) {
+          console.error(`地理编码失败: ${spot.name}`, error);
+          // 使用默认坐标
+          enrichedSpots.push({
+            ...spot,
+            longitude: 116.397428 + Math.random() * 0.1,
+            latitude: 39.90923 + Math.random() * 0.1,
+            order: i + 1
+          });
+        }
+      }
+    }
+    
+    return enrichedSpots;
   },
 
-  // 获取景点经度（模拟数据）
-  getSpotLongitude: function(id) {
-    const lngMap = {
-      1: 116.3972,
-      2: 116.0200,
-      3: 116.2755,
-      4: 116.4066,
-      5: 116.2980,
-      6: 116.3965,
-      7: 116.3840,
-      8: 116.4960
-    };
-    return lngMap[id] || 116.3 + Math.random() * 0.1;
+  // 优化路线
+  optimizeRoute: async function(spots) {
+    if (spots.length < 2) {
+      this.updatePolyline(spots);
+      return;
+    }
+    
+    this.setData({ loading: true });
+    
+    try {
+      // 使用起点（第一个景点或用户位置）
+      const startPoint = {
+        longitude: spots[0].longitude,
+        latitude: spots[0].latitude
+      };
+      
+      // 优化景点顺序
+      const optimizedSpots = await amap.optimizeRoute(spots, startPoint);
+      
+      // 计算路线详情
+      const routeDetails = await this.calculateRouteDetails(optimizedSpots);
+      
+      this.setData({
+        optimizedRoute: optimizedSpots,
+        spots: optimizedSpots,
+        totalDistance: routeDetails.totalDistance,
+        totalDuration: routeDetails.totalDuration,
+        loading: false
+      });
+      
+      // 更新地图显示
+      this.updateMapMarkers(optimizedSpots);
+      this.updatePolyline(optimizedSpots);
+      
+    } catch (error) {
+      console.error('路线优化失败:', error);
+      this.setData({ loading: false });
+      // 使用原始顺序
+      this.updatePolyline(spots);
+    }
   },
 
-  // 获取景点地址
-  getSpotAddress: function(id) {
-    const addressMap = {
-      1: '北京市东城区景山前街4号',
-      2: '北京市延庆区G6京藏高速58号出口',
-      3: '北京市海淀区新建宫门路19号',
-      4: '北京市东城区天坛东里甲1号',
-      5: '北京市海淀区清华西路28号',
-      6: '北京市朝阳区国家体育场南路1号',
-      7: '北京市朝阳区天辰东路11号',
-      8: '北京市朝阳区酒仙桥路4号'
-    };
-    return addressMap[id] || '北京市';
+  // 计算路线详情
+  calculateRouteDetails: async function(spots) {
+    let totalDistance = 0;
+    let totalDuration = 0;
+    
+    for (let i = 0; i < spots.length - 1; i++) {
+      try {
+        const route = await amap.calculateRoute(
+          { longitude: spots[i].longitude, latitude: spots[i].latitude },
+          { longitude: spots[i + 1].longitude, latitude: spots[i + 1].latitude },
+          this.data.transportMode
+        );
+        
+        totalDistance += route.distance;
+        totalDuration += route.duration;
+        
+        // 保存路段信息
+        spots[i + 1].routeFromPrev = {
+          distance: route.distance,
+          duration: route.duration,
+          formattedDistance: amap.formatDistance(route.distance),
+          formattedDuration: amap.formatDuration(route.duration)
+        };
+      } catch (error) {
+        console.error(`计算路线失败: ${spots[i].name} -> ${spots[i + 1].name}`, error);
+      }
+    }
+    
+    return { totalDistance, totalDuration };
   },
 
   // 设置默认景点
   setDefaultSpots: function() {
     const defaultSpots = [
-      { id: 1, name: '故宫博物院', image: '/images/spot1.jpg', latitude: 39.9163, longitude: 116.3972, address: '北京市东城区景山前街4号', time: 'Day 1' },
-      { id: 4, name: '天坛公园', image: '/images/spot4.jpg', latitude: 39.8822, longitude: 116.4066, address: '北京市东城区天坛东里甲1号', time: 'Day 1', distance: 3.2 },
-      { id: 2, name: '八达岭长城', image: '/images/spot2.jpg', latitude: 40.3599, longitude: 116.0200, address: '北京市延庆区G6京藏高速58号出口', time: 'Day 2', distance: 45.6 },
-      { id: 3, name: '颐和园', image: '/images/spot3.jpg', latitude: 39.9999, longitude: 116.2755, address: '北京市海淀区新建宫门路19号', time: 'Day 3', distance: 28.4 }
+      { id: 1, name: '故宫博物院', image: '/images/spot1.jpg', latitude: 39.9163, longitude: 116.3972, address: '北京市东城区景山前街4号', order: 1 },
+      { id: 4, name: '天坛公园', image: '/images/spot4.jpg', latitude: 39.8822, longitude: 116.4066, address: '北京市东城区天坛东里甲1号', order: 2 },
+      { id: 2, name: '八达岭长城', image: '/images/spot2.jpg', latitude: 40.3599, longitude: 116.0200, address: '北京市延庆区G6京藏高速58号出口', order: 3 },
+      { id: 3, name: '颐和园', image: '/images/spot3.jpg', latitude: 39.9999, longitude: 116.2755, address: '北京市海淀区新建宫门路19号', order: 4 }
     ];
 
     this.setData({ spots: defaultSpots });
@@ -131,6 +213,14 @@ Page({
         bgColor: '#1890ff',
         padding: 8,
         borderRadius: 20
+      },
+      callout: {
+        content: spot.name,
+        color: '#000',
+        fontSize: 14,
+        borderRadius: 4,
+        padding: 8,
+        display: 'BYCLICK'
       }
     }));
 
@@ -144,12 +234,20 @@ Page({
       longitude: s.longitude
     }));
 
+    const colors = {
+      driving: '#1890ff',
+      walking: '#52c41a',
+      transit: '#faad14'
+    };
+
     const polyline = [{
       points: points,
-      color: '#1890ff',
-      width: 4,
+      color: colors[this.data.transportMode] || '#1890ff',
+      width: 6,
       dottedLine: false,
-      arrowLine: true
+      arrowLine: true,
+      borderWidth: 2,
+      borderColor: '#fff'
     }];
 
     this.setData({ polyline });
@@ -167,7 +265,6 @@ Page({
     const minLng = Math.min(...longitudes);
     const maxLng = Math.max(...longitudes);
 
-    // 计算中心点
     const centerLat = (minLat + maxLat) / 2;
     const centerLng = (minLng + maxLng) / 2;
 
@@ -176,7 +273,6 @@ Page({
       longitude: centerLng
     });
 
-    // 调整缩放级别以显示所有标记
     const latDiff = maxLat - minLat;
     const lngDiff = maxLng - minLng;
     const maxDiff = Math.max(latDiff, lngDiff);
@@ -190,6 +286,17 @@ Page({
     this.setData({ scale });
   },
 
+  // 切换交通方式
+  onChangeTransportMode: function(e) {
+    const mode = e.currentTarget.dataset.mode;
+    this.setData({ transportMode: mode });
+    
+    // 重新计算路线
+    if (this.data.spots.length > 1) {
+      this.optimizeRoute(this.data.spots);
+    }
+  },
+
   // 点击标记
   onMarkerTap: function(e) {
     const markerId = e.markerId;
@@ -198,7 +305,7 @@ Page({
     if (spot) {
       wx.showModal({
         title: spot.name,
-        content: spot.address,
+        content: `${spot.address}\n${spot.routeFromPrev ? '距上一点: ' + spot.routeFromPrev.formattedDistance + ' (' + spot.routeFromPrev.formattedDuration + ')' : ''}`,
         confirmText: '导航',
         success: (res) => {
           if (res.confirm) {
@@ -214,7 +321,6 @@ Page({
     const index = e.currentTarget.dataset.index;
     const spot = this.data.spots[index];
     
-    // 移动到该位置
     this.setData({
       latitude: spot.latitude,
       longitude: spot.longitude,
@@ -254,10 +360,45 @@ Page({
 
   // 显示路线
   onShowRoute: function() {
-    wx.showToast({
-      title: '路线规划完成',
-      icon: 'success'
+    const { totalDistance, totalDuration } = this.data;
+    
+    wx.showModal({
+      title: '路线总览',
+      content: `总距离: ${amap.formatDistance(totalDistance)}\n总时长: ${amap.formatDuration(totalDuration)}`,
+      showCancel: false
     });
+  },
+
+  // 搜索周边
+  onSearchNearby: async function() {
+    try {
+      const center = {
+        longitude: this.data.longitude,
+        latitude: this.data.latitude
+      };
+      
+      const pois = await amap.searchNearby(center, '餐厅', 3000);
+      
+      // 添加为临时标记
+      const nearbyMarkers = pois.slice(0, 5).map((poi, index) => ({
+        id: 1000 + index,
+        latitude: poi.location.latitude,
+        longitude: poi.location.longitude,
+        title: poi.name,
+        iconPath: '/images/marker.png',
+        width: 30,
+        height: 30,
+        alpha: 0.7
+      }));
+      
+      this.setData({
+        markers: [...this.data.markers, ...nearbyMarkers]
+      });
+      
+      wx.showToast({ title: `找到${pois.length}个周边餐厅`, icon: 'none' });
+    } catch (error) {
+      wx.showToast({ title: '搜索失败', icon: 'none' });
+    }
   },
 
   // 返回行程
