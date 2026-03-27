@@ -45,9 +45,10 @@ trip-planner/
 ## 技术栈
 
 - **前端**: 微信小程序原生开发
-- **后端**: 微信云开发（云函数）
+- **后端**: 微信云开发（云函数 + 云数据库）
 - **地图**: 高德地图 SDK
-- **AI**: 支持 Kimi/OpenAI/文心一言等
+- **AI**: MiniMax 大模型 API
+- **数据库**: 微信云数据库（MongoDB）
 
 ## 快速开始
 
@@ -58,23 +59,32 @@ cd trip-planner
 ```
 
 ### 2. 配置 API Key
-复制 `CONFIG.md` 中的说明，配置你的 API Key。
+详见 [CONFIG.md](./CONFIG.md)：
+- MiniMax API Key（AI规划）
+- 高德地图 Key（地图服务）
 
 ### 3. 使用微信开发者工具打开项目
 
-### 4. 配置服务器域名
-在微信小程序后台添加：
-- https://restapi.amap.com (高德地图)
-- 你的 AI API 域名
+### 4. 初始化云开发环境
+- 开通云开发
+- 创建数据库集合：`trips`, `plans`, `spots`
+- 部署云函数（见下方）
 
-### 5. 开通云开发环境并部署云函数
+### 5. 部署云函数
 ```bash
-# 在微信开发者工具中
-# 1. 右键 cloud/functions/ai-plan 选择"创建并部署：云端安装依赖"
-# 2. 右键 cloud/functions/spot-search 选择"创建并部署：云端安装依赖"
+# 在微信开发者工具中，依次右键以下目录：
+# 1. cloud/functions/ai-plan → 创建并部署：云端安装依赖
+# 2. cloud/functions/spot-search → 创建并部署：云端安装依赖
+# 3. cloud/functions/init-db → 创建并部署：云端安装依赖
+
+# 然后运行 init-db 云函数初始化景点数据
 ```
 
-### 6. 编译运行
+### 6. 配置服务器域名
+在小程序后台添加：
+- `https://restapi.amap.com`（高德地图）
+
+### 7. 编译运行
 
 ## 页面说明
 
