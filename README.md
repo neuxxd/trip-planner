@@ -1,6 +1,15 @@
 # TripPlanner 旅行规划小程序
 
-一款基于微信小程序的AI旅行规划应用，帮助用户快速制定个性化旅行行程。
+一款基于微信小程序的AI智能旅行规划应用，帮助用户快速制定个性化旅行行程。
+
+## ⚠️ 使用前配置
+
+本项目需要配置以下 API Key 才能正常运行：
+
+1. **高德地图 Key** - 用于地图展示和路线规划
+2. **AI API Key** - 用于智能行程规划（Kimi/OpenAI/文心一言等）
+
+详见 [CONFIG.md](./CONFIG.md) 配置说明。
 
 ## 功能特性
 
@@ -26,36 +35,46 @@ trip-planner/
 │   └── functions/
 │       ├── ai-plan/   # AI规划云函数
 │       └── spot-search/ # 景点搜索云函数
-├── docs/              # 文档
-└── images/            # 图片资源
+├── utils/             # 工具类
+│   ├── amap.js       # 高德地图服务
+│   └── ai.js         # AI服务
+├── images/            # 图片资源
+└── docs/              # 文档
 ```
 
 ## 技术栈
 
 - **前端**: 微信小程序原生开发
 - **后端**: 微信云开发（云函数）
-- **地图**: 微信小程序 Map 组件
-- **AI**: 模拟AI规划算法（可接入真实AI服务）
+- **地图**: 高德地图 SDK
+- **AI**: 支持 Kimi/OpenAI/文心一言等
 
 ## 快速开始
 
-1. 克隆项目
+### 1. 克隆项目
 ```bash
 git clone https://github.com/yourusername/trip-planner.git
+cd trip-planner
 ```
 
-2. 使用微信开发者工具打开项目
+### 2. 配置 API Key
+复制 `CONFIG.md` 中的说明，配置你的 API Key。
 
-3. 开通云开发环境
+### 3. 使用微信开发者工具打开项目
 
-4. 部署云函数
+### 4. 配置服务器域名
+在微信小程序后台添加：
+- https://restapi.amap.com (高德地图)
+- 你的 AI API 域名
+
+### 5. 开通云开发环境并部署云函数
 ```bash
 # 在微信开发者工具中
 # 1. 右键 cloud/functions/ai-plan 选择"创建并部署：云端安装依赖"
 # 2. 右键 cloud/functions/spot-search 选择"创建并部署：云端安装依赖"
 ```
 
-5. 编译运行
+### 6. 编译运行
 
 ## 页面说明
 
@@ -88,6 +107,8 @@ git clone https://github.com/yourusername/trip-planner.git
 | 2024-03-27 | 规划展示页 | 18cb98a |
 | 2024-03-27 | 地图页 | aad0ba7 |
 | 2024-03-27 | 攻略详情页 | 0e48433 |
+| 2024-03-27 | 添加工具类 | afcd11b |
+| 2024-03-27 | 添加配置文档 | f3794b6 |
 
 ## 后续优化
 
