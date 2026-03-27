@@ -1,0 +1,203 @@
+/* pages/input/input.wxss */
+
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 30rpx;
+  padding-bottom: 160rpx;
+}
+
+/* 页面标题 */
+.page-header {
+  margin-bottom: 40rpx;
+}
+
+.page-title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+
+.page-subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 表单区域 */
+.form-section {
+  background-color: #fff;
+  border-radius: 24rpx;
+  padding: 30rpx;
+}
+
+.form-item {
+  margin-bottom: 40rpx;
+}
+
+.form-item:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+/* 输入框 */
+.form-input {
+  height: 88rpx;
+  background-color: #f8f8f8;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+  color: #333;
+}
+
+/* 日期选择 */
+.date-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.date-picker {
+  flex: 1;
+  height: 88rpx;
+  background-color: #f8f8f8;
+  border-radius: 16rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 24rpx;
+}
+
+.date-label {
+  font-size: 22rpx;
+  color: #999;
+  margin-bottom: 4rpx;
+}
+
+.date-value {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.date-separator {
+  font-size: 28rpx;
+  color: #999;
+  margin: 0 20rpx;
+}
+
+/* 计数器 */
+.counter-row {
+  display: flex;
+  align-items: center;
+}
+
+.counter-btn {
+  width: 64rpx;
+  height: 64rpx;
+  background-color: #f0f0f0;
+  border-radius: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+.counter-btn.disabled {
+  color: #ccc;
+}
+
+.counter-value {
+  font-size: 32rpx;
+  color: #333;
+  margin: 0 40rpx;
+  min-width: 80rpx;
+  text-align: center;
+}
+
+/* 预算选项 */
+.budget-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.budget-option {
+  padding: 20rpx 32rpx;
+  background-color: #f8f8f8;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  color: #666;
+  border: 2rpx solid transparent;
+}
+
+.budget-option.active {
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border-color: #1890ff;
+}
+
+/* 偏好标签 */
+.preference-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.preference-tag {
+  padding: 16rpx 28rpx;
+  background-color: #f8f8f8;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  color: #666;
+  border: 2rpx solid transparent;
+}
+
+.preference-tag.selected {
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border-color: #1890ff;
+}
+
+/* 提交按钮 */
+.submit-section {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 30rpx;
+  background-color: #fff;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+}
+
+.submit-btn {
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: #fff;
+  font-size: 34rpx;
+  font-weight: 500;
+  border-radius: 48rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submit-btn::after {
+  border: none;
+}
+
+.submit-btn.disabled {
+  background: #ccc;
+}

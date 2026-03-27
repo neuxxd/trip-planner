@@ -1,0 +1,89 @@
+<!--pages/input/input.wxml-->
+<view class="container">
+  <!-- 页面标题 -->
+  <view class="page-header">
+    <text class="page-title">规划你的旅程</text>
+    <text class="page-subtitle">填写行程信息，AI为你定制专属路线</text>
+  </view>
+
+  <!-- 表单区域 -->
+  <view class="form-section">
+    <!-- 目的地 -->
+    <view class="form-item">
+      <text class="form-label">目的地</text>
+      <input 
+        class="form-input" 
+        placeholder="请输入目的地，如：北京、三亚" 
+        value="{{destination}}"
+        bindinput="onDestinationInput"
+      />
+    </view>
+
+    <!-- 日期选择 -->
+    <view class="form-item">
+      <text class="form-label">出行日期</text>
+      <view class="date-picker-row">
+        <picker mode="date" value="{{startDate}}" start="{{today}}" bindchange="onStartDateChange">
+          <view class="date-picker">
+            <text class="date-label">开始</text>
+            <text class="date-value">{{startDate || '选择日期'}}</text>
+          </view>
+        </picker>
+        <text class="date-separator">至</text>
+        <picker mode="date" value="{{endDate}}" start="{{startDate || today}}" bindchange="onEndDateChange">
+          <view class="date-picker">
+            <text class="date-label">结束</text>
+            <text class="date-value">{{endDate || '选择日期'}}</text>
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 出行人数 -->
+    <view class="form-item">
+      <text class="form-label">出行人数</text>
+      <view class="counter-row">
+        <view class="counter-btn {{travelers <= 1 ? 'disabled' : ''}}" bindtap="decreaseTravelers">-</view>
+        <text class="counter-value">{{travelers}}人</text>
+        <view class="counter-btn" bindtap="increaseTravelers">+</view>
+      </view>
+    </view>
+
+    <!-- 预算范围 -->
+    <view class="form-item">
+      <text class="form-label">预算范围</text>
+      <view class="budget-options">
+        <view 
+          class="budget-option {{budget === item.value ? 'active' : ''}}" 
+          wx:for="{{budgetOptions}}" 
+          wx:key="value"
+          data-value="{{item.value}}"
+          bindtap="onBudgetSelect"
+        >
+          {{item.label}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 旅行偏好 -->
+    <view class="form-item">
+      <text class="form-label">旅行偏好（多选）</text>
+      <view class="preference-tags">
+        <view 
+          class="preference-tag {{item.selected ? 'selected' : ''}}" 
+          wx:for="{{preferences}}" 
+          wx:key="value"
+          data-index="{{index}}"
+          bindtap="onPreferenceToggle"
+        >
+          {{item.label}}
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="submit-section">
+    <button class="submit-btn {{canSubmit ? '' : 'disabled'}}" bindtap="onSubmit">开始规划</button>
+  </view>
+</view>
