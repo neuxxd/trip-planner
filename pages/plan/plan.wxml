@@ -1,0 +1,104 @@
+<!--pages/plan/plan.wxml-->
+<view class="container">
+  <!-- 行程概览 -->
+  <view class="summary-section" wx:if="{{plan.summary}}">
+    <view class="summary-header">
+      <text class="destination">{{plan.summary.destination}}</text>
+      <text class="days">{{plan.summary.days}}天行程</text>
+    </view>
+    
+    <view class="summary-stats">
+      <view class="stat-item">
+        <text class="stat-value">{{plan.summary.totalSpots}}</text>
+        <text class="stat-label">景点</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{plan.summary.travelers}}</text>
+        <text class="stat-label">人数</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">¥{{plan.summary.estimatedCost.total}}</text>
+        <text class="stat-label">预估费用</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 每日行程 -->
+  <view class="daily-plan-section">
+    <view class="section-title">每日行程</view>
+    
+    <view class="day-list">
+      <view class="day-item" wx:for="{{plan.dailyPlan}}" wx:key="day">
+        <!-- 日期头部 -->
+        <view class="day-header">
+          <view class="day-badge">Day {{item.day}}</view>
+          <text class="day-date">{{item.date}}</text>
+        </view>
+        
+        <!-- 景点列表 -->
+        <view class="spots-timeline">
+          <view class="timeline-item" wx:for="{{item.spots}}" wx:for-item="spot" wx:key="id">
+            <view class="timeline-dot"></view>
+            <view class="timeline-content">
+              <view class="time-range">{{spot.startTime}} - {{spot.endTime}}</view>
+              <view class="spot-card">
+                <image class="spot-image" src="{{spot.image}}" mode="aspectFill"/>
+                <view class="spot-detail">
+                  <text class="spot-name">{{spot.name}}</text>
+                  <text class="spot-duration">⏱ {{spot.duration}}</text>
+                  <text class="spot-tips" wx:if="{{spot.tips}}">💡 {{spot.tips}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 餐饮交通 -->
+        <view class="day-info" wx:if="{{item.meals}}">
+          <view class="info-item">
+            <text class="info-label">🍽 餐饮</text>
+            <text class="info-value">早:{{item.meals.breakfast}} 午:{{item.meals.lunch}} 晚:{{item.meals.dinner}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">🚗 交通</text>
+            <text class="info-value">{{item.transport}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 费用明细 -->
+  <view class="cost-section" wx:if="{{plan.summary.estimatedCost}}">
+    <view class="section-title">费用明细</view>
+    
+    <view class="cost-list">
+      <view class="cost-item">
+        <text class="cost-label">门票</text>
+        <text class="cost-value">¥{{plan.summary.estimatedCost.tickets}}</text>
+      </view>
+      <view class="cost-item">
+        <text class="cost-label">住宿</text>
+        <text class="cost-value">¥{{plan.summary.estimatedCost.accommodation}}</text>
+      </view>
+      <view class="cost-item">
+        <text class="cost-label">餐饮</text>
+        <text class="cost-value">¥{{plan.summary.estimatedCost.meals}}</text>
+      </view>
+      <view class="cost-item">
+        <text class="cost-label">交通</text>
+        <text class="cost-value">¥{{plan.summary.estimatedCost.transport}}</text>
+      </view>
+      <view class="cost-item total">
+        <text class="cost-label">总计</text>
+        <text class="cost-value">¥{{plan.summary.estimatedCost.total}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="action-bar">
+    <view class="action-btn secondary" bindtap="onSave">保存行程</view>
+    <view class="action-btn primary" bindtap="onViewMap">查看地图</view>
+  </view>
+</view>
