@@ -6,6 +6,9 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
+// 高德地图配置
+const AMAP_WEB_KEY = process.env.AMAP_WEB_KEY || '18de1150066194333cd5a2800770ea9a';
+
 // 搜索景点
 async function searchFromDB(keyword, city, page, pageSize) {
   let query = db.collection('spots');

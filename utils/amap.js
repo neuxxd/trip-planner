@@ -1,5 +1,6 @@
 // utils/amap.js - 高德地图服务
-const AMAP_KEY = 'YOUR_AMAP_KEY'; // 需要替换为真实的高德地图Key
+const AMAP_KEY = '283d2c6a7ccb59cc152d195eaef2c0db'; // 小程序SDK Key
+const AMAP_WEB_KEY = '18de1150066194333cd5a2800770ea9a'; // Web服务API Key（云函数使用）
 
 class AMapService {
   // 地理编码：地址转坐标

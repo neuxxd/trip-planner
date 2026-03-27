@@ -8,9 +8,12 @@ cloud.init({
 // MiniMax 配置
 const MINIMAX_CONFIG = {
   baseURL: 'https://api.minimax.chat/v1',
-  apiKey: process.env.MINIMAX_API_KEY, // 从环境变量读取
+  apiKey: process.env.MINIMAX_API_KEY,
   model: 'abab5.5-chat'
 };
+
+// 高德地图配置
+const AMAP_WEB_KEY = process.env.AMAP_WEB_KEY || '18de1150066194333cd5a2800770ea9a';
 
 // 调用 MiniMax API
 async function callMiniMax(prompt) {

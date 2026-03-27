@@ -24,18 +24,13 @@
 
 ### 2. 高德地图 Key（必需）
 
-**文件**：`utils/amap.js`
+**已配置**：
+- 小程序 SDK Key: `283d2c6a7ccb59cc152d195eaef2c0db`
+- Web服务 API Key: `18de1150066194333cd5a2800770ea9a`
 
-```javascript
-const AMAP_KEY = 'YOUR_AMAP_KEY';
-```
-
-获取方式：
-1. 访问 https://lbs.amap.com/
-2. 注册账号并创建应用
-3. 申请以下 Key：
-   - **Web服务 API Key**（用于云函数调用）
-   - **微信小程序 SDK Key**（用于前端地图组件）
+**云函数环境变量**（可选，已硬编码为默认值）：
+- 名称：`AMAP_WEB_KEY`
+- 值：`18de1150066194333cd5a2800770ea9a`
 
 **配置服务器域名**：
 在微信小程序后台 → 开发管理 → 开发设置 → 服务器域名，添加：
