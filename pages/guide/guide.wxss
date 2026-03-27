@@ -1,0 +1,267 @@
+/* pages/guide/guide.wxss */
+
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding-bottom: 120rpx;
+}
+
+/* 攻略头部 */
+.guide-header {
+  position: relative;
+  height: 400rpx;
+}
+
+.header-image {
+  width: 100%;
+  height: 100%;
+}
+
+.header-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200rpx;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+}
+
+.header-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 30rpx;
+}
+
+.guide-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 16rpx;
+  text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.3);
+}
+
+.guide-meta {
+  display: flex;
+  gap: 30rpx;
+}
+
+.meta-item {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.9);
+}
+
+/* 作者信息 */
+.author-section {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.author-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background-color: #eee;
+}
+
+.author-info {
+  flex: 1;
+  margin-left: 20rpx;
+}
+
+.author-name {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.author-desc {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.follow-btn {
+  padding: 16rpx 32rpx;
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: #fff;
+  font-size: 26rpx;
+  border-radius: 30rpx;
+}
+
+.follow-btn.following {
+  background: #f0f0f0;
+  color: #999;
+}
+
+/* 攻略内容 */
+.guide-content {
+  background-color: #fff;
+  padding: 30rpx;
+}
+
+.content-section {
+  margin-bottom: 50rpx;
+}
+
+.content-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 24rpx;
+  padding-left: 20rpx;
+  border-left: 8rpx solid #1890ff;
+}
+
+.section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.paragraph {
+  font-size: 30rpx;
+  color: #333;
+  line-height: 1.8;
+  text-align: justify;
+}
+
+.content-image {
+  width: 100%;
+  border-radius: 16rpx;
+}
+
+.tip-box {
+  background-color: #f6ffed;
+  border: 1rpx solid #b7eb8f;
+  border-radius: 16rpx;
+  padding: 24rpx;
+}
+
+.tip-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #52c41a;
+  margin-bottom: 12rpx;
+}
+
+.tip-content {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* 相关推荐 */
+.recommend-section {
+  background-color: #fff;
+  margin-top: 20rpx;
+  padding: 30rpx;
+}
+
+.section-header {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 24rpx;
+}
+
+.recommend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.recommend-item {
+  display: flex;
+  background-color: #f8f8f8;
+  border-radius: 16rpx;
+  padding: 20rpx;
+}
+
+.recommend-image {
+  width: 160rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  background-color: #eee;
+}
+
+.recommend-info {
+  flex: 1;
+  margin-left: 20rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.recommend-title {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+
+.recommend-views {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 底部操作栏 */
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100rpx;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 30rpx;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
+}
+
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 40rpx;
+}
+
+.action-icon {
+  font-size: 36rpx;
+  margin-bottom: 4rpx;
+  opacity: 0.6;
+}
+
+.action-icon.active {
+  opacity: 1;
+}
+
+.action-text {
+  font-size: 20rpx;
+  color: #666;
+}
+
+.action-btn {
+  flex: 1;
+  height: 72rpx;
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: #fff;
+  font-size: 28rpx;
+  border-radius: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 20rpx;
+}

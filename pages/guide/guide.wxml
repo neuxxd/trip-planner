@@ -1,0 +1,84 @@
+<!--pages/guide/guide.wxml-->
+<view class="container">
+  <!-- 攻略头部 -->
+  <view class="guide-header">
+    <image class="header-image" src="{{guide.cover}}" mode="aspectFill"/>
+    <view class="header-overlay"></view>
+    
+    <view class="header-content">
+      <text class="guide-title">{{guide.title}}</text>
+      <view class="guide-meta">
+        <text class="meta-item">👁 {{guide.views}}</text>
+        <text class="meta-item">❤️ {{guide.likes}}</text>
+        <text class="meta-item">📅 {{guide.date}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 作者信息 -->
+  <view class="author-section">
+    <image class="author-avatar" src="{{guide.author.avatar}}"/>
+    <view class="author-info">
+      <text class="author-name">{{guide.author.name}}</text>
+      <text class="author-desc">{{guide.author.desc}}</text>
+    </view>
+    <view class="follow-btn {{guide.author.isFollowing ? 'following' : ''}}" bindtap="onFollow">
+      {{guide.author.isFollowing ? '已关注' : '关注'}}
+    </view>
+  </view>
+
+  <!-- 攻略内容 -->
+  <view class="guide-content">
+    <view class="content-section" wx:for="{{guide.sections}}" wx:key="title">
+      <view class="section-title">{{item.title}}</view>
+      
+      <view class="section-body">
+        <block wx:for="{{item.content}}" wx:for-item="para" wx:key="*this">
+          <text class="paragraph" wx:if="{{para.type === 'text'}}">{{para.text}}</text>
+          
+          <image class="content-image" wx:if="{{para.type === 'image'}}" src="{{para.url}}" mode="widthFix"/>
+          
+          <view class="tip-box" wx:if="{{para.type === 'tip'}}">
+            <text class="tip-title">💡 {{para.title}}</text>
+            <text class="tip-content">{{para.text}}</text>
+          </view>
+        </block>
+      </view>
+    </view>
+  </view>
+
+  <!-- 相关推荐 -->
+  <view class="recommend-section" wx:if="{{guide.recommends.length > 0}}">
+    <view class="section-header">相关推荐</view>
+    
+    <view class="recommend-list">
+      <view class="recommend-item" wx:for="{{guide.recommends}}" wx:key="id" bindtap="onRecommendTap" data-id="{{item.id}}">
+        <image class="recommend-image" src="{{item.cover}}" mode="aspectFill"/>
+        <view class="recommend-info">
+          <text class="recommend-title">{{item.title}}</text>
+          <text class="recommend-views">{{item.views}} 浏览</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="action-bar">
+    <view class="action-item" bindtap="onLike">
+      <text class="action-icon {{guide.isLiked ? 'active' : ''}}">❤️</text>
+      <text class="action-text">{{guide.likes}}</text>
+    </view>
+    
+    <view class="action-item" bindtap="onCollect">
+      <text class="action-icon {{guide.isCollected ? 'active' : ''}}">⭐</text>
+      <text class="action-text">收藏</text>
+    </view>
+    
+    <view class="action-item" bindtap="onShare">
+      <text class="action-icon">↗️</text>
+      <text class="action-text">分享</text>
+    </view>
+    
+    <view class="action-btn" bindtap="onUsePlan">使用此行程</view>
+  </view>
+</view>
