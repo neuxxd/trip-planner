@@ -7,6 +7,27 @@ Page({
 
   onLoad: function() {
     this.loadRecentTrips();
+    this.fetchRecommendedSpots();
+  },
+
+  // 调用风火轮API获取推荐景点
+  fetchRecommendedSpots: function() {
+    const baseUrl = 'https://api.fenghuolun.vip';
+    wx.request({
+      url: baseUrl + '/api/spots/recommend',
+      method: 'GET',
+      data: {
+        appid: 'appid123'
+      },
+      success: (res) => {
+        if (res.data && res.data.code === 0) {
+          console.log('推荐景点获取成功', res.data.data);
+        }
+      },
+      fail: (err) => {
+        console.error('推荐景点获取失败', err);
+      }
+    });
   },
 
   onShow: function() {
@@ -42,7 +63,7 @@ Page({
   // 快速开始
   onQuickStart: function() {
     wx.navigateTo({
-      url: '/pages/input/input'
+      url: '/pages/trip/index'
     });
   },
 
