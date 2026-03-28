@@ -101,7 +101,7 @@ class AMapService {
       wx.request({
         url,
         success: (res) => {
-          if (res.data.status === '1' && res.data.route && res.data.route.paths) {
+          if ((res.data.status === '1' || res.data.status === 1) && res.data.route && res.data.route.paths) {
             const path = res.data.route.paths[0];
             resolve({
               distance: parseInt(path.distance), // 米
@@ -138,13 +138,13 @@ class AMapService {
     const destsStr = destinations.map(d => `${d.longitude},${d.latitude}`).join('|');
     
     const type = mode === 'walking' ? 3 : mode === 'bicycling' ? 2 : 1;
-    const url = `${this.baseURL}/distance?key=${AMAP_WEB_KEY}&origins=${originsStr}&destination=${destsStr}&type=${type}`;
+    const url = `${this.baseURL}/distance?key=${AMAP_WEB_KEY}&origins=${originsStr}&destinations=${destsStr}&type=${type}`;
     
     return new Promise((resolve, reject) => {
       wx.request({
         url,
         success: (res) => {
-          if (res.data.status === '1' && res.data.results) {
+          if ((res.data.status === '1' || res.data.status === 1) && res.data.results) {
             const matrix = [];
             for (let i = 0; i < origins.length; i++) {
               const row = [];
