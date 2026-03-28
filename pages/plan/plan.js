@@ -1,10 +1,17 @@
-// pages/plan/plan.js - 本地生成规划，不依赖云开发
+// pages/plan/plan.js - 使用 MiniMax AI 生成规划
+const MINIMAX_CONFIG = {
+  baseURL: 'https://api.minimax.chat/v1',
+  apiKey: 'sk-api-W5V8JrRpS_3oHI169bn8RF7ir2hoBNPrL-u0szfKTwr9mYo2WCL5y6e8R7VXlYh-FBMlpX4SPWtoOs4k6Wrt1eFda9QKQdRnTafxQa2gl2PB67GlrSUz420',
+  model: 'abab5.5-chat'
+};
+
 Page({
   data: {
     plan: {
       summary: null,
       dailyPlan: []
-    }
+    },
+    loading: false
   },
 
   onLoad: function(options) {
@@ -17,7 +24,6 @@ Page({
 
   // 加载行程规划
   loadPlan: function() {
-    // 从本地存储获取数据
     const tripData = wx.getStorageSync('currentTrip');
     const selectedSpots = wx.getStorageSync('selectedSpots');
     
@@ -29,77 +35,219 @@ Page({
       return;
     }
 
-    // 本地生成规划
-    this.generateLocalPlan(tripData, selectedSpots);
+    // 调用 AI 生成规划
+    this.generateAIPlan(tripData, selectedSpots);
   },
 
-  // 本地生成规划（不调用云开发）
-  generateLocalPlan: function(tripData, spots) {
-    wx.showLoading({ title: '生成规划中...' });
+  // 调用 MiniMax AI 生成规划
+  generateAIPlan: async function(tripData, spots) {
+    this.setData({ loading: true });
+    wx.showLoading({ title: 'AI规划中...' });
 
-    // 模拟异步处理
-    setTimeout(() => {
-      wx.hideLoading();
-      
-      // 生成本地规划
-      const plan = this.createPlan(tripData, spots);
+    try {
+      const prompt = this.buildPrompt(tripData, spots);
+      const aiResponse = await this.callMiniMax(prompt);
+      const plan = this.parseAIResponse(aiResponse, tripData, spots);
       
       this.setData({
-        plan: plan
+        plan: plan,
+        loading: false
       });
       
-      // 保存到最近行程
       this.saveToRecentTrips(tripData, plan);
       
       wx.showToast({
-        title: '规划生成完成',
+        title: '规划完成',
         icon: 'success'
       });
-    }, 500);
+    } catch (error) {
+      console.error('AI规划失败:', error);
+      wx.showToast({
+        title: 'AI规划失败，使用默认规划',
+        icon: 'none'
+      });
+      // 降级到本地规划
+      this.generateLocalPlan(tripData, spots);
+    } finally {
+      wx.hideLoading();
+      this.setData({ loading: false });
+    }
   },
 
-  // 创建规划数据
-  createPlan: function(tripData, spots) {
+  // 构建 Prompt
+  buildPrompt: function(tripData, spots) {
+    const cities = tripData.cities || ['未知城市'];
+    const days = this.calculateDays(tripData.startDate, tripData.endDate);
+    const travelers = tripData.travelers || 2;
+    const budget = tripData.budget || 'medium';
+    const preferences = tripData.preferences || [];
+    
+    const spotList = spots.map((s, i) => `${i + 1}. ${s.name} (${s.address || ''})`).join('\n');
+    
+    return `请为以下行程制定详细的旅行规划：
+
+【行程信息】
+- 目的地：${cities.join('、')}
+- 出行天数：${days}天
+- 出行人数：${travelers}人
+- 预算水平：${budget === 'low' ? '经济型' : budget === 'high' ? '豪华型' : '舒适型'}
+- 旅行偏好：${preferences.join('、') || '无特殊偏好'}
+- 日期：${tripData.startDate} 至 ${tripData.endDate}
+
+【已选景点】
+${spotList}
+
+【要求】
+1. 将景点合理分配到每一天，考虑地理位置和游览时间
+2. 每天安排2-4个景点，避免过于紧凑
+3. 为每个景点安排合理的游览时间段
+4. 提供实用的游览建议和注意事项
+5. 推荐每天的餐饮安排
+6. 预估整体费用（门票、住宿、餐饮、交通）
+
+【输出格式】
+请严格按照以下JSON格式返回，不要添加任何markdown标记：
+{
+  "summary": {
+    "destination": "目的地",
+    "days": ${days},
+    "travelers": ${travelers},
+    "totalSpots": ${spots.length},
+    "estimatedCost": {
+      "tickets": 门票费用,
+      "accommodation": 住宿费用,
+      "meals": 餐饮费用,
+      "transport": 交通费用,
+      "other": 其他费用,
+      "total": 总费用
+    }
+  },
+  "dailyPlan": [
+    {
+      "day": 1,
+      "date": "${tripData.startDate}",
+      "spots": [
+        {
+          "name": "景点名称",
+          "startTime": "09:00",
+          "endTime": "12:00",
+          "duration": "3小时",
+          "tips": "游览建议"
+        }
+      ],
+      "meals": {
+        "breakfast": "早餐建议",
+        "lunch": "午餐建议",
+        "dinner": "晚餐建议"
+      },
+      "transport": "交通方式",
+      "accommodation": "住宿建议"
+    }
+  ]
+}`;
+  },
+
+  // 调用 MiniMax API
+  callMiniMax: function(prompt) {
+    return new Promise((resolve, reject) => {
+      wx.request({
+        url: `${MINIMAX_CONFIG.baseURL}/text/chatcompletion_v2`,
+        method: 'POST',
+        header: {
+          'Authorization': `Bearer ${MINIMAX_CONFIG.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        data: {
+          model: MINIMAX_CONFIG.model,
+          messages: [
+            {
+              role: 'system',
+              content: '你是专业的旅行规划师，擅长制定详细、实用的旅行行程。请严格按照用户要求的JSON格式返回，不要添加任何markdown格式标记。'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 4000
+        },
+        timeout: 30000,
+        success: (res) => {
+          if (res.statusCode === 200 && res.data.choices && res.data.choices[0]) {
+            resolve(res.data.choices[0].message.content);
+          } else {
+            reject(new Error('MiniMax API 返回错误'));
+          }
+        },
+        fail: reject
+      });
+    });
+  },
+
+  // 解析 AI 响应
+  parseAIResponse: function(content, tripData, spots) {
+    try {
+      // 提取 JSON
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const plan = JSON.parse(jsonMatch[0]);
+        // 补充景点图片等信息
+        plan.dailyPlan.forEach(day => {
+          day.spots.forEach(spot => {
+            const matchedSpot = spots.find(s => s.name === spot.name);
+            if (matchedSpot) {
+              spot.image = matchedSpot.image;
+              spot.id = matchedSpot.id;
+              spot.address = matchedSpot.address;
+            }
+          });
+        });
+        return plan;
+      }
+    } catch (e) {
+      console.error('解析AI响应失败:', e);
+    }
+    throw new Error('无法解析AI响应');
+  },
+
+  // 本地规划（降级方案）
+  generateLocalPlan: function(tripData, spots) {
     const cities = tripData?.cities || ['北京'];
     const city = cities[0];
     const days = this.calculateDays(tripData?.startDate, tripData?.endDate) || 3;
     const travelers = tripData?.travelers || 2;
     
-    // 按天数分配景点
     const dailyPlan = [];
-    const spotsPerDay = Math.max(2, Math.ceil(spots.length / days)); // 每天至少2个景点
+    const spotsPerDay = Math.max(2, Math.ceil(spots.length / days));
     
     for (let i = 0; i < days; i++) {
       const daySpots = spots.slice(i * spotsPerDay, (i + 1) * spotsPerDay);
       if (daySpots.length === 0) break;
       
-      // 为每个景点分配时间
-      const scheduledSpots = daySpots.map((spot, idx) => {
-        const startHour = 9 + idx * 3; // 每个景点3小时
-        const endHour = startHour + 3;
-        return {
-          ...spot,
-          startTime: `${startHour}:00`,
-          endTime: `${endHour}:00`,
-          duration: '3小时',
-          tips: this.generateTips(spot, idx)
-        };
-      });
+      const scheduledSpots = daySpots.map((spot, idx) => ({
+        ...spot,
+        startTime: `${9 + idx * 3}:00`,
+        endTime: `${12 + idx * 3}:00`,
+        duration: '3小时',
+        tips: '建议合理安排时间'
+      }));
       
       dailyPlan.push({
         day: i + 1,
         date: this.addDays(tripData?.startDate, i),
         spots: scheduledSpots,
-        meals: this.generateMeals(i, city),
-        transport: i === 0 ? '从酒店出发' : '公共交通+步行',
+        meals: {
+          breakfast: '酒店早餐',
+          lunch: `${city}特色餐厅`,
+          dinner: '当地美食推荐'
+        },
+        transport: '公共交通+步行',
         accommodation: i < days - 1 ? `入住${city}酒店` : null
       });
     }
     
-    // 计算费用
-    const estimatedCost = this.calculateCost(spots.length, days, travelers);
-    
-    return {
+    const plan = {
       summary: {
         destination: city,
         cities: cities,
@@ -107,52 +255,26 @@ Page({
         travelers: travelers,
         budget: tripData?.budget || 'medium',
         totalSpots: spots.length,
-        estimatedCost: estimatedCost
+        estimatedCost: {
+          tickets: 100 * spots.length * travelers,
+          accommodation: 400 * days * Math.ceil(travelers / 2),
+          meals: 150 * days * travelers,
+          transport: 100 * days,
+          other: 200,
+          total: 0
+        }
       },
       dailyPlan: dailyPlan
     };
-  },
-
-  // 生成景点提示
-  generateTips: function(spot, index) {
-    const tips = [
-      '建议早上去，避开人流高峰',
-      '可以预留更多时间拍照',
-      '附近有特色小吃值得尝试',
-      '建议提前预订门票',
-      '穿舒适的鞋子，方便游览',
-      '傍晚时分景色最美'
-    ];
-    return tips[index % tips.length];
-  },
-
-  // 生成餐饮推荐
-  generateMeals: function(dayIndex, city) {
-    const meals = [
-      { breakfast: '酒店早餐', lunch: `${city}特色餐厅`, dinner: '当地美食推荐' },
-      { breakfast: '酒店早餐', lunch: '景点附近餐厅', dinner: '网红餐厅打卡' },
-      { breakfast: '酒店早餐', lunch: '特色小吃', dinner: '告别晚餐' }
-    ];
-    return meals[dayIndex % meals.length];
-  },
-
-  // 计算费用
-  calculateCost: function(spotCount, days, travelers) {
-    const roomCount = Math.ceil(travelers / 2);
-    const tickets = 100 * spotCount * travelers; // 门票
-    const accommodation = 400 * days * roomCount; // 住宿
-    const meals = 150 * days * travelers; // 餐饮
-    const transport = 100 * days; // 交通
-    const other = 200; // 其他
     
-    return {
-      tickets,
-      accommodation,
-      meals,
-      transport,
-      other,
-      total: tickets + accommodation + meals + transport + other
-    };
+    plan.summary.estimatedCost.total = 
+      plan.summary.estimatedCost.tickets +
+      plan.summary.estimatedCost.accommodation +
+      plan.summary.estimatedCost.meals +
+      plan.summary.estimatedCost.transport +
+      plan.summary.estimatedCost.other;
+
+    this.setData({ plan });
   },
 
   // 计算天数
@@ -184,7 +306,6 @@ Page({
       plan: plan
     };
 
-    // 添加到开头，最多保留10条
     recentTrips.unshift(newTrip);
     if (recentTrips.length > 10) {
       recentTrips.pop();
