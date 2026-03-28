@@ -45,7 +45,7 @@ class AMapService {
    * @returns {Promise<Object>}
    */
   async reverseGeocode(longitude, latitude) {
-    const url = `${this.baseURL}/geocode/regeo?key=${AMAP_KEY}&location=${longitude},${latitude}&extensions=base`;
+    const url = `${this.baseURL}/geocode/regeo?key=${AMAP_WEB_KEY}&location=${longitude},${latitude}&extensions=base`;
     
     return new Promise((resolve, reject) => {
       wx.request({
@@ -232,7 +232,7 @@ class AMapService {
       offset = 20
     } = options;
     
-    let url = `${this.baseURL}/place/text?key=${AMAP_KEY}&keywords=${encodeURIComponent(keyword)}&city=${city}&offset=${offset}&page=${page}&extensions=all`;
+    let url = `${this.baseURL}/place/text?key=${AMAP_WEB_KEY}&keywords=${encodeURIComponent(keyword)}&city=${city}&offset=${offset}&page=${page}&extensions=all`;
     
     if (types) url += `&types=${types}`;
     
@@ -275,7 +275,7 @@ class AMapService {
    */
   async searchNearby(center, keywords = '', radius = 3000) {
     const location = `${center.longitude},${center.latitude}`;
-    const url = `${this.baseURL}/place/around?key=${AMAP_KEY}&location=${location}&keywords=${encodeURIComponent(keywords)}&radius=${radius}&extensions=all`;
+    const url = `${this.baseURL}/place/around?key=${AMAP_WEB_KEY}&location=${location}&keywords=${encodeURIComponent(keywords)}&radius=${radius}&extensions=all`;
     
     return new Promise((resolve, reject) => {
       wx.request({
