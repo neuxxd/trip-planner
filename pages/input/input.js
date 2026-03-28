@@ -24,7 +24,9 @@ Page({
       { value: 'shopping', label: '购物娱乐', selected: false },
       { value: 'relax', label: '休闲度假', selected: false },
       { value: 'adventure', label: '户外探险', selected: false }
-    ]
+    ],
+    // 是否可以提交
+    canSubmit: false
   },
 
   onLoad: function() {
@@ -46,6 +48,14 @@ Page({
     this.setData({
       destination: e.detail.value
     });
+    this.checkCanSubmit();
+  },
+
+  // 检查是否可以提交
+  checkCanSubmit: function() {
+    const { destination, startDate, endDate } = this.data;
+    const canSubmit = destination.trim() && startDate && endDate;
+    this.setData({ canSubmit });
   },
 
   // 开始日期选择
@@ -57,6 +67,7 @@ Page({
     if (this.data.endDate && this.data.endDate < e.detail.value) {
       this.setData({ endDate: '' });
     }
+    this.checkCanSubmit();
   },
 
   // 结束日期选择
@@ -64,6 +75,7 @@ Page({
     this.setData({
       endDate: e.detail.value
     });
+    this.checkCanSubmit();
   },
 
   // 减少人数
