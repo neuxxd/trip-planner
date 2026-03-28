@@ -17,12 +17,24 @@ Page({
   onLoad: function(options) {
     // 如果有搜索关键词
     if (options.keyword) {
-      this.setData({ keyword: options.keyword });
+      const keyword = options.keyword;
+      // 解析城市名
+      const cityMatch = keyword.match(/^(北京|上海|广州|深圳|杭州|南京|成都|西安|济南|青岛|厦门|三亚|丽江|大理|桂林|张家界|拉萨|乌鲁木齐|哈尔滨|长春|沈阳|大连|石家庄|太原|郑州|武汉|长沙|南昌|合肥|福州|昆明|贵阳|南宁|海口|兰州|西宁|银川|呼和浩特|拉萨)(.+)?$/);
+      if (cityMatch) {
+        this.setData({ 
+          city: cityMatch[1],
+          keyword: cityMatch[2] || ''
+        });
+      } else {
+        this.setData({ keyword: keyword });
+      }
     }
-    // 获取当前行程的目的地
-    const currentTrip = wx.getStorageSync('currentTrip');
-    if (currentTrip && currentTrip.destination) {
-      this.setData({ city: currentTrip.destination });
+    // 获取当前行程的目的地（如果没有从keyword解析出城市）
+    if (this.data.city === '北京') {
+      const currentTrip = wx.getStorageSync('currentTrip');
+      if (currentTrip && currentTrip.destination) {
+        this.setData({ city: currentTrip.destination });
+      }
     }
     this.loadSpots();
   },
