@@ -21,13 +21,12 @@
         <view class="city-input-row">
           <input 
             class="city-input" 
-            placeholder="输入城市，如：济南" 
+            placeholder="输入城市，如：济南，按回车添加" 
             value="{{cityInput}}"
             bindinput="onCityInput"
-            confirm-type="done"
             bindconfirm="onAddCity"
+            bindblur="onAddCity"
           />
-          <view class="city-add-btn" bindtap="onAddCity">添加</view>
         </view>
       </view>
     </view>

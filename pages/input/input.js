@@ -54,12 +54,11 @@ Page({
   // 添加城市
   onAddCity: function() {
     const city = this.data.cityInput.trim();
-    if (!city) {
-      wx.showToast({ title: '请输入城市名', icon: 'none' });
-      return;
-    }
+    if (!city) return; // 空输入不处理
+    
     if (this.data.cities.includes(city)) {
       wx.showToast({ title: '该城市已添加', icon: 'none' });
+      this.setData({ cityInput: '' });
       return;
     }
     const cities = [...this.data.cities, city];
