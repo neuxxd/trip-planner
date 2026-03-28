@@ -23,7 +23,9 @@ Page({
     transportMode: 'driving', // driving, walking, transit
     // 总距离和时长
     totalDistance: 0,
-    totalDuration: 0
+    totalDuration: 0,
+    formattedDistance: '',
+    formattedDuration: ''
   },
 
   onLoad: function() {
@@ -133,6 +135,8 @@ Page({
         spots: optimizedSpots,
         totalDistance: routeDetails.totalDistance,
         totalDuration: routeDetails.totalDuration,
+        formattedDistance: routeDetails.formattedDistance,
+        formattedDuration: routeDetails.formattedDuration,
         loading: false
       });
       
@@ -176,7 +180,12 @@ Page({
       }
     }
     
-    return { totalDistance, totalDuration };
+    return { 
+      totalDistance, 
+      totalDuration,
+      formattedDistance: totalDistance > 1000 ? (totalDistance/1000).toFixed(1) + 'km' : totalDistance + 'm',
+      formattedDuration: totalDuration > 3600 ? Math.floor(totalDuration/3600) + 'h' + Math.floor((totalDuration%3600)/60) + 'min' : Math.floor(totalDuration/60) + 'min'
+    };
   },
 
   // 设置默认景点

@@ -56,12 +56,12 @@
     </view>
     <view class="summary-divider"></view>
     <view class="summary-item">
-      <text class="summary-value">{{totalDistance > 1000 ? (totalDistance/1000).toFixed(1) + 'km' : totalDistance + 'm'}}</text>
+      <text class="summary-value">{{formattedDistance}}</text>
       <text class="summary-label">总距离</text>
     </view>
     <view class="summary-divider"></view>
     <view class="summary-item">
-      <text class="summary-value">{{totalDuration > 3600 ? Math.floor(totalDuration/3600) + 'h' : Math.floor(totalDuration/60) + 'min'}}</text>
+      <text class="summary-value">{{formattedDuration}}</text>
       <text class="summary-label">总时长</text>
     </view>
   </view>
