@@ -1,4 +1,4 @@
-// pages/plan/plan.js
+// pages/plan/plan.js - 本地生成规划，不依赖云开发
 Page({
   data: {
     plan: {
@@ -22,135 +22,137 @@ Page({
     const selectedSpots = wx.getStorageSync('selectedSpots');
     
     if (!tripData || !selectedSpots || selectedSpots.length === 0) {
-      // 如果没有数据，使用模拟数据
-      this.setMockData();
+      wx.showToast({
+        title: '请先选择景点',
+        icon: 'none'
+      });
       return;
     }
 
-    // 调用云函数生成规划
-    this.generatePlan(tripData, selectedSpots);
+    // 本地生成规划
+    this.generateLocalPlan(tripData, selectedSpots);
   },
 
-  // 生成规划
-  generatePlan: function(tripData, spots) {
+  // 本地生成规划（不调用云开发）
+  generateLocalPlan: function(tripData, spots) {
     wx.showLoading({ title: '生成规划中...' });
 
-    wx.cloud.callFunction({
-      name: 'ai-plan',
-      data: {
-        tripData,
-        spots
-      }
-    }).then(res => {
+    // 模拟异步处理
+    setTimeout(() => {
       wx.hideLoading();
       
-      if (res.result.code === 0) {
-        this.setData({
-          plan: res.result.data
-        });
-        // 保存到最近行程
-        this.saveToRecentTrips(tripData, res.result.data);
-      } else {
-        wx.showToast({
-          title: res.result.message,
-          icon: 'none'
-        });
-      }
-    }).catch(err => {
-      wx.hideLoading();
-      console.error('生成规划失败:', err);
+      // 生成本地规划
+      const plan = this.createPlan(tripData, spots);
       
-      // 判断错误类型
-      let errorMsg = '生成规划失败';
-      if (err.errCode === -601034 || err.message?.includes('没有权限') || err.message?.includes('云开发')) {
-        errorMsg = '云开发未开通，无法生成AI规划';
-      } else if (err.message?.includes('timeout')) {
-        errorMsg = '请求超时，请重试';
-      }
-      
-      wx.showModal({
-        title: '生成失败',
-        content: errorMsg + '，是否使用默认规划？',
-        confirmText: '使用默认',
-        cancelText: '返回',
-        success: (res) => {
-          if (res.confirm) {
-            // 使用本地模拟数据
-            this.setMockData(tripData, spots);
-          } else {
-            // 返回上一页
-            wx.navigateBack();
-          }
-        }
+      this.setData({
+        plan: plan
       });
-    });
+      
+      // 保存到最近行程
+      this.saveToRecentTrips(tripData, plan);
+      
+      wx.showToast({
+        title: '规划生成完成',
+        icon: 'success'
+      });
+    }, 500);
   },
 
-  // 设置模拟数据
-  setMockData: function(tripData, spots) {
+  // 创建规划数据
+  createPlan: function(tripData, spots) {
     const cities = tripData?.cities || ['北京'];
     const city = cities[0];
     const days = this.calculateDays(tripData?.startDate, tripData?.endDate) || 3;
     const travelers = tripData?.travelers || 2;
     
-    // 使用用户选择的景点生成规划
+    // 按天数分配景点
     const dailyPlan = [];
-    const spotsPerDay = Math.ceil((spots?.length || 6) / days);
+    const spotsPerDay = Math.max(2, Math.ceil(spots.length / days)); // 每天至少2个景点
     
     for (let i = 0; i < days; i++) {
-      const daySpots = spots?.slice(i * spotsPerDay, (i + 1) * spotsPerDay) || [];
+      const daySpots = spots.slice(i * spotsPerDay, (i + 1) * spotsPerDay);
       if (daySpots.length === 0) break;
+      
+      // 为每个景点分配时间
+      const scheduledSpots = daySpots.map((spot, idx) => {
+        const startHour = 9 + idx * 3; // 每个景点3小时
+        const endHour = startHour + 3;
+        return {
+          ...spot,
+          startTime: `${startHour}:00`,
+          endTime: `${endHour}:00`,
+          duration: '3小时',
+          tips: this.generateTips(spot, idx)
+        };
+      });
       
       dailyPlan.push({
         day: i + 1,
         date: this.addDays(tripData?.startDate, i),
-        spots: daySpots.map((spot, idx) => ({
-          ...spot,
-          startTime: `${9 + idx * 3}:00`,
-          endTime: `${12 + idx * 3}:00`,
-          duration: '3小时',
-          tips: '建议合理安排时间'
-        })),
-        meals: {
-          breakfast: '酒店早餐',
-          lunch: '当地特色餐厅',
-          dinner: '推荐美食'
-        },
-        transport: '公共交通+步行',
+        spots: scheduledSpots,
+        meals: this.generateMeals(i, city),
+        transport: i === 0 ? '从酒店出发' : '公共交通+步行',
         accommodation: i < days - 1 ? `入住${city}酒店` : null
       });
     }
     
-    const mockPlan = {
+    // 计算费用
+    const estimatedCost = this.calculateCost(spots.length, days, travelers);
+    
+    return {
       summary: {
         destination: city,
+        cities: cities,
         days: days,
         travelers: travelers,
         budget: tripData?.budget || 'medium',
-        totalSpots: spots?.length || 0,
-        estimatedCost: {
-          tickets: 200 * (spots?.length || 6),
-          accommodation: 400 * days * Math.ceil(travelers / 2),
-          meals: 150 * days * travelers,
-          transport: 100 * days,
-          other: 200,
-          total: 0
-        }
+        totalSpots: spots.length,
+        estimatedCost: estimatedCost
       },
       dailyPlan: dailyPlan
     };
-    
-    // 计算总费用
-    mockPlan.summary.estimatedCost.total = 
-      mockPlan.summary.estimatedCost.tickets +
-      mockPlan.summary.estimatedCost.accommodation +
-      mockPlan.summary.estimatedCost.meals +
-      mockPlan.summary.estimatedCost.transport +
-      mockPlan.summary.estimatedCost.other;
+  },
 
-    this.setData({
-      plan: mockPlan
-    });
+  // 生成景点提示
+  generateTips: function(spot, index) {
+    const tips = [
+      '建议早上去，避开人流高峰',
+      '可以预留更多时间拍照',
+      '附近有特色小吃值得尝试',
+      '建议提前预订门票',
+      '穿舒适的鞋子，方便游览',
+      '傍晚时分景色最美'
+    ];
+    return tips[index % tips.length];
+  },
+
+  // 生成餐饮推荐
+  generateMeals: function(dayIndex, city) {
+    const meals = [
+      { breakfast: '酒店早餐', lunch: `${city}特色餐厅`, dinner: '当地美食推荐' },
+      { breakfast: '酒店早餐', lunch: '景点附近餐厅', dinner: '网红餐厅打卡' },
+      { breakfast: '酒店早餐', lunch: '特色小吃', dinner: '告别晚餐' }
+    ];
+    return meals[dayIndex % meals.length];
+  },
+
+  // 计算费用
+  calculateCost: function(spotCount, days, travelers) {
+    const roomCount = Math.ceil(travelers / 2);
+    const tickets = 100 * spotCount * travelers; // 门票
+    const accommodation = 400 * days * roomCount; // 住宿
+    const meals = 150 * days * travelers; // 餐饮
+    const transport = 100 * days; // 交通
+    const other = 200; // 其他
+    
+    return {
+      tickets,
+      accommodation,
+      meals,
+      transport,
+      other,
+      total: tickets + accommodation + meals + transport + other
+    };
   },
 
   // 计算天数
@@ -175,8 +177,8 @@ Page({
     
     const newTrip = {
       id: Date.now(),
-      name: tripData.destination + ' ' + plan.summary.days + '日游',
-      destination: tripData.destination,
+      name: plan.summary.destination + ' ' + plan.summary.days + '日游',
+      destination: plan.summary.destination,
       date: tripData.startDate,
       cover: plan.dailyPlan[0]?.spots[0]?.image || '/images/default.jpg',
       plan: plan
