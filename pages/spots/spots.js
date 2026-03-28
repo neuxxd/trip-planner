@@ -36,6 +36,22 @@ Page({
 
   // 搜索
   onSearch: function() {
+    // 从关键词中提取城市
+    const keyword = this.data.keyword.trim();
+    let city = this.data.city;
+    
+    // 简单解析：如果关键词包含常见城市名，提取出来
+    const cityMatch = keyword.match(/^(北京|上海|广州|深圳|杭州|南京|成都|西安|济南|青岛|厦门|三亚|丽江|大理|桂林|张家界|拉萨|乌鲁木齐|哈尔滨|长春|沈阳|大连|石家庄|太原|郑州|武汉|长沙|南昌|合肥|福州|昆明|贵阳|南宁|海口|兰州|西宁|银川|呼和浩特|拉萨)(.+)?$/);
+    if (cityMatch) {
+      city = cityMatch[1];
+      // 更新关键词（去掉城市名）
+      const newKeyword = cityMatch[2] || '景点';
+      this.setData({
+        keyword: newKeyword,
+        city: city
+      });
+    }
+    
     this.setData({
       spots: [],
       page: 1,
