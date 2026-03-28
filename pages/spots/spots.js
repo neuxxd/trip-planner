@@ -29,11 +29,11 @@ Page({
         this.setData({ keyword: keyword });
       }
     }
-    // 获取当前行程的目的地（如果没有从keyword解析出城市）
+    // 获取当前行程的城市（如果没有从keyword解析出城市）
     if (this.data.city === '北京') {
       const currentTrip = wx.getStorageSync('currentTrip');
-      if (currentTrip && currentTrip.destination) {
-        this.setData({ city: currentTrip.destination });
+      if (currentTrip && currentTrip.cities && currentTrip.cities.length > 0) {
+        this.setData({ city: currentTrip.cities[0] });
       }
     }
     this.loadSpots();
