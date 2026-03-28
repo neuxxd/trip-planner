@@ -246,8 +246,8 @@ Page({
     
     console.log('准备跳转到规划页，已选景点数:', selectedSpots.length);
     
-    // 跳转到规划页
-    wx.navigateTo({
+    // 跳转到规划页（tabBar页面用switchTab）
+    wx.switchTab({
       url: '/pages/plan/plan',
       success: function() {
         console.log('跳转成功');
