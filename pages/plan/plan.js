@@ -1,6 +1,6 @@
 // pages/plan/plan.js - 使用 MiniMax AI 生成规划
 const MINIMAX_CONFIG = {
-  baseURL: 'https://api.minimax.chat/v1',
+  baseURL: 'https://api.minimaxi.chat/v1',
   apiKey: 'sk-api-W5V8JrRpS_3oHI169bn8RF7ir2hoBNPrL-u0szfKTwr9mYo2WCL5y6e8R7VXlYh-FBMlpX4SPWtoOs4k6Wrt1eFda9QKQdRnTafxQa2gl2PB67GlrSUz420',
   model: 'abab5.5-chat'
 };
