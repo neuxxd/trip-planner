@@ -1,7 +1,6 @@
 // pages/index/index.js
 Page({
   data: {
-    searchKey: '',
     recentTrips: []
   },
 
@@ -22,24 +21,7 @@ Page({
     });
   },
 
-  // 搜索输入
-  onSearchInput: function(e) {
-    this.setData({
-      searchKey: e.detail.value
-    });
-  },
-
-  // 搜索
-  onSearch: function() {
-    const key = this.data.searchKey.trim();
-    if (key) {
-      wx.navigateTo({
-        url: '/pages/spots/spots?keyword=' + encodeURIComponent(key)
-      });
-    }
-  },
-
-  // 快速开始
+  // 开始规划
   onQuickStart: function() {
     wx.navigateTo({
       url: '/pages/input/input'

@@ -1,19 +1,13 @@
 <view class="container">
-  <!-- 顶部搜索栏 -->
-  <view class="search-bar">
-    <input class="search-input" placeholder="搜索目的地、景点..." bindinput="onSearchInput" value="{{searchKey}}" />
-    <view class="search-btn" bindtap="onSearch">搜索</view>
-  </view>
-
   <!-- 主标题 -->
   <view class="hero-section">
     <text class="hero-title">探索你的下一次旅行</text>
-    <text class="hero-subtitle">发现精彩目的地，规划完美行程</text>
+    <text class="hero-subtitle">选择目的地，AI为你规划完美行程</text>
   </view>
 
   <!-- 快速开始按钮 -->
   <view class="quick-start-section">
-    <button class="quick-start-btn" bindtap="onQuickStart">快速开始</button>
+    <button class="quick-start-btn" bindtap="onQuickStart">开始规划</button>
   </view>
 
   <!-- 最近行程 -->

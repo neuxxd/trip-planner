@@ -3,20 +3,33 @@
   <!-- 页面标题 -->
   <view class="page-header">
     <text class="page-title">规划你的旅程</text>
-    <text class="page-subtitle">填写行程信息，AI为你定制专属路线</text>
+    <text class="page-subtitle">选择目的地，AI为你定制专属路线</text>
   </view>
 
   <!-- 表单区域 -->
   <view class="form-section">
-    <!-- 目的地 -->
+    <!-- 目的地城市 -->
     <view class="form-item">
-      <text class="form-label">目的地</text>
-      <input 
-        class="form-input" 
-        placeholder="请输入目的地，如：北京、三亚" 
-        value="{{destination}}"
-        bindinput="onDestinationInput"
-      />
+      <text class="form-label">目的地城市</text>
+      <view class="cities-section">
+        <view class="cities-list">
+          <view class="city-tag" wx:for="{{cities}}" wx:key="*this">
+            <text>{{item}}</text>
+            <view class="city-remove" data-index="{{index}}" bindtap="onRemoveCity">×</view>
+          </view>
+        </view>
+        <view class="city-input-row">
+          <input 
+            class="city-input" 
+            placeholder="输入城市，如：济南" 
+            value="{{cityInput}}"
+            bindinput="onCityInput"
+            confirm-type="done"
+            bindconfirm="onAddCity"
+          />
+          <view class="city-add-btn" bindtap="onAddCity">添加</view>
+        </view>
+      </view>
     </view>
 
     <!-- 日期选择 -->

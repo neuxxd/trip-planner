@@ -1,8 +1,9 @@
 // pages/input/input.js
 Page({
   data: {
-    // 目的地
-    destination: '',
+    // 城市列表
+    cities: [],
+    cityInput: '',
     // 日期
     today: '',
     startDate: '',
@@ -43,18 +44,44 @@ Page({
     return `${year}-${month}-${day}`;
   },
 
-  // 目的地输入
-  onDestinationInput: function(e) {
+  // 城市输入
+  onCityInput: function(e) {
     this.setData({
-      destination: e.detail.value
+      cityInput: e.detail.value
     });
+  },
+
+  // 添加城市
+  onAddCity: function() {
+    const city = this.data.cityInput.trim();
+    if (!city) {
+      wx.showToast({ title: '请输入城市名', icon: 'none' });
+      return;
+    }
+    if (this.data.cities.includes(city)) {
+      wx.showToast({ title: '该城市已添加', icon: 'none' });
+      return;
+    }
+    const cities = [...this.data.cities, city];
+    this.setData({
+      cities: cities,
+      cityInput: ''
+    });
+    this.checkCanSubmit();
+  },
+
+  // 移除城市
+  onRemoveCity: function(e) {
+    const index = e.currentTarget.dataset.index;
+    const cities = this.data.cities.filter((_, i) => i !== index);
+    this.setData({ cities });
     this.checkCanSubmit();
   },
 
   // 检查是否可以提交
   checkCanSubmit: function() {
-    const { destination, startDate, endDate } = this.data;
-    const canSubmit = destination.trim() && startDate && endDate;
+    const { cities, startDate, endDate } = this.data;
+    const canSubmit = cities.length > 0 && startDate && endDate;
     this.setData({ canSubmit });
   },
 
@@ -114,7 +141,7 @@ Page({
     if (!this.data.canSubmit) return;
 
     const tripData = {
-      destination: this.data.destination,
+      cities: this.data.cities,
       startDate: this.data.startDate,
       endDate: this.data.endDate,
       travelers: this.data.travelers,
