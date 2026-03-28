@@ -59,120 +59,114 @@ Page({
     }).catch(err => {
       wx.hideLoading();
       console.error('生成规划失败:', err);
-      // 使用本地模拟数据
-      this.setMockData();
+      
+      // 判断错误类型
+      let errorMsg = '生成规划失败';
+      if (err.errCode === -601034 || err.message?.includes('没有权限') || err.message?.includes('云开发')) {
+        errorMsg = '云开发未开通，无法生成AI规划';
+      } else if (err.message?.includes('timeout')) {
+        errorMsg = '请求超时，请重试';
+      }
+      
+      wx.showModal({
+        title: '生成失败',
+        content: errorMsg + '，是否使用默认规划？',
+        confirmText: '使用默认',
+        cancelText: '返回',
+        success: (res) => {
+          if (res.confirm) {
+            // 使用本地模拟数据
+            this.setMockData(tripData, spots);
+          } else {
+            // 返回上一页
+            wx.navigateBack();
+          }
+        }
+      });
     });
   },
 
   // 设置模拟数据
-  setMockData: function() {
+  setMockData: function(tripData, spots) {
+    const cities = tripData?.cities || ['北京'];
+    const city = cities[0];
+    const days = this.calculateDays(tripData?.startDate, tripData?.endDate) || 3;
+    const travelers = tripData?.travelers || 2;
+    
+    // 使用用户选择的景点生成规划
+    const dailyPlan = [];
+    const spotsPerDay = Math.ceil((spots?.length || 6) / days);
+    
+    for (let i = 0; i < days; i++) {
+      const daySpots = spots?.slice(i * spotsPerDay, (i + 1) * spotsPerDay) || [];
+      if (daySpots.length === 0) break;
+      
+      dailyPlan.push({
+        day: i + 1,
+        date: this.addDays(tripData?.startDate, i),
+        spots: daySpots.map((spot, idx) => ({
+          ...spot,
+          startTime: `${9 + idx * 3}:00`,
+          endTime: `${12 + idx * 3}:00`,
+          duration: '3小时',
+          tips: '建议合理安排时间'
+        })),
+        meals: {
+          breakfast: '酒店早餐',
+          lunch: '当地特色餐厅',
+          dinner: '推荐美食'
+        },
+        transport: '公共交通+步行',
+        accommodation: i < days - 1 ? `入住${city}酒店` : null
+      });
+    }
+    
     const mockPlan = {
       summary: {
-        destination: '北京',
-        days: 3,
-        travelers: 2,
-        budget: 'medium',
-        totalSpots: 6,
+        destination: city,
+        days: days,
+        travelers: travelers,
+        budget: tripData?.budget || 'medium',
+        totalSpots: spots?.length || 0,
         estimatedCost: {
-          tickets: 310,
-          accommodation: 1440,
-          meals: 1080,
-          transport: 720,
-          other: 360,
-          total: 3910
+          tickets: 200 * (spots?.length || 6),
+          accommodation: 400 * days * Math.ceil(travelers / 2),
+          meals: 150 * days * travelers,
+          transport: 100 * days,
+          other: 200,
+          total: 0
         }
       },
-      dailyPlan: [
-        {
-          day: 1,
-          date: '2024-05-01',
-          spots: [
-            {
-              id: 1,
-              name: '故宫博物院',
-              image: '/images/spot1.jpg',
-              startTime: '09:00',
-              endTime: '12:00',
-              duration: '3小时',
-              tips: '建议早上去，避开人流高峰'
-            },
-            {
-              id: 4,
-              name: '天坛公园',
-              image: '/images/spot4.jpg',
-              startTime: '14:00',
-              endTime: '17:00',
-              duration: '3小时',
-              tips: '傍晚时分景色最美'
-            }
-          ],
-          meals: {
-            breakfast: '酒店早餐',
-            lunch: '故宫附近餐厅',
-            dinner: '前门大街美食'
-          },
-          transport: '地铁+步行',
-          accommodation: '入住北京市中心酒店'
-        },
-        {
-          day: 2,
-          date: '2024-05-02',
-          spots: [
-            {
-              id: 2,
-              name: '八达岭长城',
-              image: '/images/spot2.jpg',
-              startTime: '08:00',
-              endTime: '14:00',
-              duration: '6小时',
-              tips: '穿舒适的鞋子，带足水'
-            }
-          ],
-          meals: {
-            breakfast: '酒店早餐',
-            lunch: '长城脚下餐厅',
-            dinner: '烤鸭店'
-          },
-          transport: '旅游专线巴士',
-          accommodation: null
-        },
-        {
-          day: 3,
-          date: '2024-05-03',
-          spots: [
-            {
-              id: 3,
-              name: '颐和园',
-              image: '/images/spot3.jpg',
-              startTime: '09:00',
-              endTime: '13:00',
-              duration: '4小时',
-              tips: '可以租船游湖'
-            },
-            {
-              id: 5,
-              name: '圆明园',
-              image: '/images/spot5.jpg',
-              startTime: '14:30',
-              endTime: '17:00',
-              duration: '2.5小时',
-              tips: '了解历史背景游览更有意义'
-            }
-          ],
-          meals: {
-            breakfast: '酒店早餐',
-            lunch: '颐和园附近',
-            dinner: '告别晚餐'
-          },
-          transport: '地铁+打车',
-          accommodation: null
-        }
-      ]
+      dailyPlan: dailyPlan
     };
+    
+    // 计算总费用
+    mockPlan.summary.estimatedCost.total = 
+      mockPlan.summary.estimatedCost.tickets +
+      mockPlan.summary.estimatedCost.accommodation +
+      mockPlan.summary.estimatedCost.meals +
+      mockPlan.summary.estimatedCost.transport +
+      mockPlan.summary.estimatedCost.other;
 
     this.setData({
       plan: mockPlan
     });
+  },
+
+  // 计算天数
+  calculateDays: function(startDate, endDate) {
+    if (!startDate || !endDate) return 3;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1);
+  },
+
+  // 添加天数
+  addDays: function(dateStr, days) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split('T')[0];
   },
 
   // 保存到最近行程
