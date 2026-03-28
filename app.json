@@ -1,7 +1,6 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/trip/index",
     "pages/input/input",
     "pages/spots/spots",
     "pages/plan/plan",
