@@ -25,7 +25,7 @@
         wx:for="{{spots}}" 
         wx:key="id"
         data-index="{{index}}"
-        bindtap="onSpotToggle"
+        bindtap="onSelectSpot"
       >
         <image class="spot-image" src="{{item.image}}" mode="aspectFill"/>
         
