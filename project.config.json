@@ -46,5 +46,5 @@
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate",
   "srcMiniprogramRoot": "miniprogram/",
   "cloudbaseRoot": "cloudbase/",
-  "miniprogramRoot": "miniprogram/"
+  "miniprogramRoot": ""
 }
