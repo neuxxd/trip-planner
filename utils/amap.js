@@ -16,7 +16,7 @@ class AMapService {
    * @returns {Promise<{longitude: number, latitude: number}>}
    */
   async geocode(address, city = '') {
-    const url = `${this.baseURL}/geocode/geo?key=${AMAP_KEY}&address=${encodeURIComponent(address)}${city ? '&city=' + city : ''}`;
+    const url = `${this.baseURL}/geocode/geo?key=${AMAP_WEB_KEY}&address=${encodeURIComponent(address)}${city ? '&city=' + city : ''}`;
     
     return new Promise((resolve, reject) => {
       wx.request({
@@ -83,17 +83,17 @@ class AMapService {
     let url;
     switch (mode) {
       case 'walking':
-        url = `${this.baseURL}/direction/walking?key=${AMAP_KEY}&origin=${originStr}&destination=${destStr}`;
+        url = `${this.baseURL}/direction/walking?key=${AMAP_WEB_KEY}&origin=${originStr}&destination=${destStr}`;
         break;
       case 'transit':
-        url = `${this.baseURL}/direction/transit/integrated?key=${AMAP_KEY}&origin=${originStr}&destination=${destStr}&city=北京`;
+        url = `${this.baseURL}/direction/transit/integrated?key=${AMAP_WEB_KEY}&origin=${originStr}&destination=${destStr}&city=北京`;
         break;
       case 'bicycling':
-        url = `${this.baseURL}/direction/riding?key=${AMAP_KEY}&origin=${originStr}&destination=${destStr}`;
+        url = `${this.baseURL}/direction/riding?key=${AMAP_WEB_KEY}&origin=${originStr}&destination=${destStr}`;
         break;
       case 'driving':
       default:
-        url = `${this.baseURL}/direction/driving?key=${AMAP_KEY}&origin=${originStr}&destination=${destStr}&extensions=base`;
+        url = `${this.baseURL}/direction/driving?key=${AMAP_WEB_KEY}&origin=${originStr}&destination=${destStr}&extensions=base`;
         break;
     }
     
@@ -138,7 +138,7 @@ class AMapService {
     const destsStr = destinations.map(d => `${d.longitude},${d.latitude}`).join('|');
     
     const type = mode === 'walking' ? 3 : mode === 'bicycling' ? 2 : 1;
-    const url = `${this.baseURL}/distance?key=${AMAP_KEY}&origins=${originsStr}&destination=${destsStr}&type=${type}`;
+    const url = `${this.baseURL}/distance?key=${AMAP_WEB_KEY}&origins=${originsStr}&destination=${destsStr}&type=${type}`;
     
     return new Promise((resolve, reject) => {
       wx.request({
