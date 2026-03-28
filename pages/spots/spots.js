@@ -208,6 +208,10 @@ Page({
     
     const selectedCount = spots.filter(s => s.selected).length;
     
+    // 获取已选中的景点并保存到本地存储
+    const selectedSpots = spots.filter(s => s.selected);
+    wx.setStorageSync('selectedSpots', selectedSpots);
+    
     this.setData({
       spots: spots,
       selectedCount: selectedCount
@@ -225,8 +229,8 @@ Page({
     this.loadSpots();
   },
 
-  // 完成选择
-  onComplete: function() {
+  // 下一步
+  onNext: function() {
     const selectedSpots = this.data.spots.filter(s => s.selected);
     
     if (selectedSpots.length === 0) {
@@ -240,8 +244,23 @@ Page({
     // 保存到本地存储
     wx.setStorageSync('selectedSpots', selectedSpots);
     
-    // 返回上一页
-    wx.navigateBack();
+    // 跳转到规划页
+    wx.navigateTo({
+      url: '/pages/plan/plan'
+    });
+  },
+
+  // 清空选择
+  onClearSelected: function() {
+    const spots = this.data.spots.map(spot => ({
+      ...spot,
+      selected: false
+    }));
+    this.setData({
+      spots: spots,
+      selectedCount: 0
+    });
+    wx.setStorageSync('selectedSpots', []);
   },
 
   // 返回
